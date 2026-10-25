@@ -19,6 +19,10 @@ export async function seedDemo(adapter: DataAdapter, today: DateKey): Promise<vo
   const flock = (await adapter.collection('flocks').list())[0];
   if (!household || !flock) return;
   const sample = buildSampleFlock(household.id, flock.id, today);
+  const ts0 = nowIso();
+  // Demo only: named household members, with Sarah on this morning's feeding.
+  sample.household_people = ['Sarah', 'Alex'].map((name) => ({ id: uid('mem_'), householdId: household.id, name, createdAt: ts0, updatedAt: ts0, sample: true }));
+  sample.feeding_logs = (sample.feeding_logs ?? []).map((l) => ({ ...l, doneBy: 'Sarah' }));
   for (const [c, rows] of Object.entries(sample)) {
     const store = adapter.collection(c as CollectionName);
     const existing = await store.list();

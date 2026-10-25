@@ -3,12 +3,18 @@ import { useApp } from '../state/AppData';
 import { Card, Chips, Confirm, Empty, Field, Page, Pill, Sheet } from '../components/ui';
 import { daysRemaining, estimatedQuantity, round, runOutDate, stockLevel } from '../logic/feed';
 import { formatDate, relativeDay } from '../logic/dates';
-import { parseNum } from '../components/helpers';
+import { parseMoney, parseNum } from '../components/helpers';
+import { Link } from '../router';
+import { reorderUrl } from '../content/shop';
+import { costCategoryForFeed } from '../logic/spending';
+import { money } from '../logic/eggs';
+import { maxKey } from '../logic/dates';
 import type { FeedCategory, FeedItem } from '../contracts/domain';
 
 const CATS: { value: FeedCategory; label: string; emoji: string }[] = [
-  { value: 'feed', label: 'Feed', emoji: '🌾' }, { value: 'treats', label: 'Treats', emoji: '🍓' }, { value: 'supplement', label: 'Supplement', emoji: '💊' },
-  { value: 'grit', label: 'Grit and oyster shell', emoji: '🪨' }, { value: 'bedding', label: 'Bedding', emoji: '🪵' }, { value: 'other', label: 'Other', emoji: '📦' },
+  { value: 'feed', label: 'Feed', emoji: '🌾' }, { value: 'treats', label: 'Treats', emoji: '🍓' }, { value: 'scratch', label: 'Scratch', emoji: '🌽' },
+  { value: 'supplement', label: 'Supplement', emoji: '💊' }, { value: 'grit', label: 'Grit and oyster shell', emoji: '🪨' }, { value: 'bedding', label: 'Bedding', emoji: '🪵' },
+  { value: 'coop_care', label: 'Coop care', emoji: '🧺' }, { value: 'other', label: 'Other', emoji: '📦' },
 ];
 const UNITS = ['lb', 'kg', 'bags', 'scoops', 'oz', 'bales'];
 
@@ -24,6 +30,10 @@ export default function Feed() {
   return (
     <Page title="Feed and supplies" subtitle={items.length ? `${items.length} items tracked` : undefined} action={<button className="btn primary small" onClick={() => setEditing('new')}>+ Item</button>}>
       {low.length > 0 && <div className="notice" role="status">⚠️ {low.map((i) => i.name).join(', ')} {low.length === 1 ? 'is' : 'are'} running low.</div>}
+      <Link to="/treats" className="card cta-card">
+        <span className="cta-emoji" aria-hidden="true">🌽</span>
+        <span className="item-main"><strong style={{ display: 'block' }}>Treat tracker</strong><span className="small muted">Log treats and scratch against a healthy daily limit</span></span>
+      </Link>
       <Card title="Inventory">
         {items.length === 0 ? (
           <Empty icon="🌾" title="No supplies tracked" action={<button className="btn primary" onClick={() => setEditing('new')}>Add feed or supplies</button>}>
@@ -45,10 +55,13 @@ export default function Feed() {
                   <span className="item-end">
                     {d === null ? <Pill>No usage set</Pill> : <><div>{d} day{d === 1 ? '' : 's'}</div>{out && <div className="small muted" style={{ fontWeight: 600 }}>until {formatDate(out)}</div>}</>}
                   </span>
-                  <span className="row gap" style={{ width: '100%', paddingLeft: 36 }}>
+                  <span className="row gap wrap" style={{ width: '100%', paddingLeft: 36, rowGap: 6 }}>
                     {lvl === 'out' && <Pill tone="bad">Out</Pill>}
                     {lvl === 'low' && <Pill tone="warn">Low stock</Pill>}
                     <span className="grow" />
+                    {(lvl === 'low' || lvl === 'out') && reorderUrl(i.category) && (
+                      <a className="btn small" href={reorderUrl(i.category) ?? undefined} target="_blank" rel="noopener noreferrer">Reorder<span className="sr-only"> {i.name} on Fresh Eggs Daily (opens in a new tab)</span></a>
+                    )}
                     <button className="btn small" onClick={() => setRestocking(i)}>Restock</button>
                     <button className="btn small ghost" onClick={() => setEditing(i)}>Edit</button>
                   </span>
@@ -59,7 +72,7 @@ export default function Feed() {
         )}
       </Card>
       <Card title="Feed log">
-        {logs.length === 0 ? <Empty icon="📝" title="No entries yet">Restocks and recounts show up here.</Empty> : (
+        {logs.length === 0 ? <Empty icon="📝" title="No entries yet">Restocks, recounts and logged feedings show up here.</Empty> : (
           <ul className="list">
             {logs.map((l) => {
               const it = itemName.get(l.itemId);
@@ -69,7 +82,7 @@ export default function Feed() {
                     <span className="item-title" style={{ display: 'block' }}>{l.kind === 'restock' ? 'Restocked' : l.kind === 'recount' ? 'Recounted' : 'Used'} {it?.name ?? 'deleted item'}</span>
                     <span className="item-sub">{relativeDay(l.occurredOn, today)}{l.notes ? ` · ${l.notes}` : ''}</span>
                   </span>
-                  <span className="item-end">{l.kind === 'restock' ? '+' : ''}{l.amount} {it?.unit ?? ''}</span>
+                  <span className="item-end">{l.kind === 'restock' ? '+' : l.kind === 'use' ? '-' : ''}{round(l.amount, 2)} {it?.unit ?? ''}</span>
                 </li>
               );
             })}
@@ -104,8 +117,11 @@ function ItemForm({ item, onDone }: { item?: FeedItem; onDone(): void }) {
     const ld = parseNum(lowDays) ?? 7;
     if (!name.trim()) return setErr('Name the item.');
     if (q === null) return setErr('Enter how much you have on hand.');
-    await save('feed_inventory', { ...(item ?? {}), name: name.trim(), category, unit, quantity: q, countedOn: today, dailyUsage: u, lowStockDays: Math.round(ld) } as FeedItem);
-    if (item && Math.abs(q - estimatedQuantity(item, today)) > 0.001) await save('feed_logs', { itemId: item.id, occurredOn: today, kind: 'recount', amount: q });
+    const recounted = !item || Math.abs(q - round(estimatedQuantity(item, today), 2)) > 0.001;
+    // Keep the existing count when only other details changed, so logged feedings are not counted twice.
+    const count = recounted ? { quantity: q, countedOn: today } : { quantity: item.quantity, countedOn: item.countedOn };
+    await save('feed_inventory', { ...(item ?? {}), name: name.trim(), category, unit, ...count, dailyUsage: u, lowStockDays: Math.round(ld) } as FeedItem);
+    if (item && recounted) await save('feed_logs', { itemId: item.id, occurredOn: today, kind: 'recount', amount: q });
     toast(item ? 'Item updated' : 'Item added');
     onDone();
   }
@@ -130,27 +146,35 @@ function ItemForm({ item, onDone }: { item?: FeedItem; onDone(): void }) {
 
 function RestockForm({ item, onDone }: { item: FeedItem; onDone(): void }) {
   const { today, save, toast } = useApp();
+  const [mode, setMode] = useState<'add' | 'set'>('add');
   const [amount, setAmount] = useState('');
+  const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [err, setErr] = useState('');
+  const current = estimatedQuantity(item, today);
   async function submit(e: FormEvent) {
     e.preventDefault();
     const a = parseNum(amount);
-    if (a === null || a <= 0) return setErr('Enter how much you added.');
-    const current = estimatedQuantity(item, today);
-    await save('feed_inventory', { ...item, quantity: round(current + a, 3), countedOn: today });
-    await save('feed_logs', { itemId: item.id, occurredOn: today, kind: 'restock', amount: a, notes: notes.trim() || undefined });
-    toast(`Added ${a} ${item.unit}`);
+    const p = price.trim() ? parseMoney(price) : null;
+    if (a === null || a <= 0) return setErr(mode === 'add' ? 'Enter how much you added.' : 'Enter how much you have now.');
+    if (price.trim() && (p === null || p <= 0)) return setErr('Enter the price, or leave it blank.');
+    const quantity = round(mode === 'add' ? current + a : a, 3);
+    // A logged feeding may already have moved the count to tomorrow; keep that so today is not deducted twice.
+    await save('feed_inventory', { ...item, quantity, countedOn: maxKey(today, item.countedOn) });
+    await save('feed_logs', { itemId: item.id, occurredOn: today, kind: mode === 'add' ? 'restock' : 'recount', amount: mode === 'add' ? a : quantity, notes: notes.trim() || undefined });
+    if (p !== null) await save('flock_costs', { category: costCategoryForFeed(item.category), amount: p, occurredOn: today, notes: notes.trim() || `Restock: ${item.name}` });
+    toast(`${mode === 'add' ? `Added ${a} ${item.unit}` : `Set to ${quantity} ${item.unit}`}${p !== null ? `, ${money(p)} logged` : ''}`);
     onDone();
   }
   return (
     <form onSubmit={(e) => void submit(e)} noValidate>
-      <p className="muted">Currently about {round(estimatedQuantity(item, today))} {item.unit} on hand.</p>
-      <Field label={`Amount added (${item.unit})`}>{(id) => <input id={id} className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />}</Field>
-      <Field label="Notes">{(id) => <input id={id} className="input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Store, brand, price" maxLength={200} />}</Field>
-      <p className="hint" style={{ marginTop: -6, marginBottom: 14 }}>Log what you paid on Eggs, History, Costs to include it in cost per dozen.</p>
+      <p className="muted">Currently about {round(current)} {item.unit} on hand.</p>
+      <Chips label="How to count it" value={mode} onChange={(m) => { setMode(m); setAmount(''); }} options={[{ value: 'add', label: 'Add to what is left' }, { value: 'set', label: 'Set new total' }]} />
+      <Field label={mode === 'add' ? `Amount added (${item.unit})` : `On hand now (${item.unit})`}>{(id) => <input id={id} className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />}</Field>
+      <Field label="Price paid (optional)" hint="Logged as a cost so it shows on Spending and in cost per dozen.">{(id, d) => <input id={id} aria-describedby={d} className="input" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="$24.99" />}</Field>
+      <Field label="Notes">{(id) => <input id={id} className="input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Store or brand" maxLength={200} />}</Field>
       {err && <p className="error-text" role="alert">{err}</p>}
-      <div className="row gap"><button type="button" className="btn ghost grow" onClick={onDone}>Cancel</button><button type="submit" className="btn primary grow">Add stock</button></div>
+      <div className="row gap"><button type="button" className="btn ghost grow" onClick={onDone}>Cancel</button><button type="submit" className="btn primary grow">{mode === 'add' ? 'Add stock' : 'Save count'}</button></div>
     </form>
   );
 }

@@ -11,6 +11,10 @@ import { formatDate } from '../logic/dates';
 import RemindersList from './RemindersList';
 import { ARTICLES } from '../content/articles';
 import type { CollectionName } from '../contracts/domain';
+import { FeedingChecklist } from '../components/Feeding';
+import { TreatMeter, useTreatStatus } from './Treats';
+import { reorderUrl } from '../content/shop';
+import { daysRemaining, stockLevel } from '../logic/feed';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -27,7 +31,11 @@ export default function Home() {
   const streak = choreStreak(data.chore_templates, data.chore_occurrences, today);
   const onHand = eggsOnHand(data.egg_collections, data.egg_inventory);
   const trend = layingTrend(data.egg_collections, today);
-  const reminders = useMemo(() => remindersFor(data, today), [data, today]);
+  const allReminders = useMemo(() => remindersFor(data, today), [data, today]);
+  // Low feed has its own card on Home with Reorder, so it is left out of Due today here (the bell still lists it).
+  const reminders = allReminders.filter((r) => r.kind !== 'feed');
+  const low = data.feed_inventory.filter((f) => ['low', 'out'].includes(stockLevel(f, today)));
+  const treats = useTreatStatus(activeFlockId);
   const hasSample = COLLS.some((c) => (data[c] as { sample?: boolean }[]).some((x) => x.sample));
   const tip = ARTICLES[(Number(today.slice(8, 10)) + Number(today.slice(5, 7))) % ARTICLES.length];
 
@@ -73,6 +81,36 @@ export default function Home() {
         </div>
       </Card>
 
+      {data.flocks.length > 0 && (
+        <Card title="Feeding today" action={<Link to="/coop" className="link-btn">Feed times</Link>}>
+          <FeedingChecklist />
+        </Card>
+      )}
+
+      {low.length > 0 && (
+        <Card title="Running low" action={<Link to="/feed" className="link-btn">Feed</Link>}>
+          <ul className="list" aria-label="Running low">
+            {low.map((f) => {
+              const url = reorderUrl(f.category);
+              const d = daysRemaining(f, today);
+              const out = stockLevel(f, today) === 'out';
+              return (
+                <li key={f.id} className="item">
+                  <span className="avatar" aria-hidden="true" style={{ width: 40, height: 40, fontSize: '1.2rem' }}>🌾</span>
+                  <span className="item-main">
+                    <span className="item-title" style={{ display: 'block' }}>{out ? `Out of ${f.name}` : `${f.name} is running low`}</span>
+                    <span className="item-sub">{out ? 'Restock soon' : `About ${d} day${d === 1 ? '' : 's'} left`}</span>
+                  </span>
+                  {url
+                    ? <a className="btn small" href={url} target="_blank" rel="noopener noreferrer">Reorder<span className="sr-only"> {f.name} on Fresh Eggs Daily (opens in a new tab)</span></a>
+                    : <Link to="/feed" className="btn small ghost">Restock<span className="sr-only"> {f.name}</span></Link>}
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+
       <nav className="quick-row" aria-label="Photo tools">
         <Link to="/identify" className="quick"><span aria-hidden="true">📷</span>Identify a breed</Link>
         <Link to="/health-check" className="quick"><span aria-hidden="true">🔍</span>Photo health check</Link>
@@ -103,6 +141,11 @@ export default function Home() {
           <RemindersList reminders={reminders} limit={5} />
           {reminders.length > 5 && <p className="small muted center">Plus {reminders.length - 5} more in the bell menu.</p>}
         </Card>
+        {birds.length > 0 && (
+          <Card title="Treats today" action={<Link to="/treats" className="link-btn">Log a treat</Link>}>
+            <TreatMeter status={treats} compact />
+          </Card>
+        )}
         <Card title="Egg snapshot" action={<Link to="/eggs/history" className="link-btn">History</Link>}>
           <div className="grid2">
             <Stat value={onHand} label="Eggs on hand" />
@@ -129,4 +172,4 @@ export default function Home() {
   );
 }
 
-const COLLS: CollectionName[] = ['birds', 'egg_collections', 'egg_inventory', 'flock_costs', 'feed_inventory', 'bird_health_events'];
+const COLLS: CollectionName[] = ['birds', 'egg_collections', 'egg_inventory', 'flock_costs', 'feed_inventory', 'bird_health_events', 'feeding_logs', 'treat_logs', 'household_people'];

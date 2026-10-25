@@ -24,7 +24,16 @@ export interface Sampleable { sample?: boolean }
 
 export interface Household extends AuditFields { name: string }
 
-export interface Flock extends AuditFields, Sampleable { householdId: ID; name: string; coopName?: string; notes?: string }
+export interface Flock extends AuditFields, Sampleable {
+  householdId: ID; name: string; coopName?: string; notes?: string;
+  /** Daily feeding check-off labels, 1 to 3. Defaults to DEFAULT_FEED_TIMES when unset. */
+  feedTimes?: string[];
+  /** Feed inventory item that feedings draw from. Unset means the first item in the feed category; 'none' turns amounts off. */
+  feedItemId?: ID | 'none';
+}
+
+/** Names-only household members, used for "done by" on feedings. */
+export interface HouseholdMember extends AuditFields, Sampleable { householdId: ID; name: string }
 
 export type BirdStatus = BirdProfile['status'];
 export interface BirdProfileDetails { color?: string; photo?: string; notes?: string }
@@ -55,13 +64,29 @@ export type ChoreRecurrence = 'daily' | 'weekly' | 'monthly' | 'seasonal';
 export interface ChoreTemplate extends AuditFields { householdId: ID; title: string; recurrence: ChoreRecurrence; startDate: DateKey; active: boolean; builtIn?: boolean }
 export interface ChoreDone extends ChoreOccurrence { templateId: ID; /** dueAt holds the DateKey the chore was due. */ }
 
-export type FeedCategory = 'feed' | 'treats' | 'bedding' | 'supplement' | 'grit' | 'other';
+export type FeedCategory = 'feed' | 'treats' | 'scratch' | 'bedding' | 'supplement' | 'grit' | 'coop_care' | 'other';
 export interface FeedItem extends AuditFields, Sampleable {
   householdId: ID; name: string; category: FeedCategory; unit: string;
   /** Quantity on hand as of countedOn. */
   quantity: number; countedOn: DateKey; dailyUsage: number; lowStockDays: number;
 }
 export interface FeedLog extends AuditFields, Sampleable { householdId: ID; itemId: ID; occurredOn: DateKey; kind: 'restock' | 'recount' | 'use'; amount: number; notes?: string }
+
+/** One completed daily feeding slot. Resets daily because it is keyed by day. */
+export interface FeedingLog extends AuditFields, Sampleable {
+  householdId: ID; flockId: ID; day: DateKey;
+  /** Index into the flock's feed times. */
+  slot: number; label: string;
+  /** ISO instant the feeding was checked off. */
+  doneAt: string; doneBy?: string;
+  /** Inventory deduction, in the item's unit. */
+  itemId?: ID; amount?: number;
+  /** The feed_logs "use" entry created for this feeding, removed on undo. */
+  feedLogId?: ID;
+}
+
+export type TreatUnit = 'cups' | 'grams' | 'handfuls';
+export interface TreatLog extends AuditFields, Sampleable { householdId: ID; flockId: ID; day: DateKey; itemId: ID; amount: number; unit: TreatUnit }
 
 export interface IncubationBatch extends AuditFields, Sampleable { householdId: ID; name: string; setOn: DateKey; eggCount: number; notes?: string }
 export interface HatchEvent extends AuditFields, Sampleable { householdId: ID; batchId: ID; recordedOn: DateKey; hatched: number; unhatched: number; notes?: string }
@@ -101,18 +126,22 @@ export interface HealthIssue { name: string; likelihood: Likelihood; signsSeen: 
 export interface HealthCheckResult { photoUsable: boolean; possibleIssues: HealthIssue[]; urgency: Urgency; seeVetIf: string[]; summary: string }
 
 export type ReminderKind = 'chore' | 'care' | 'feed' | 'incubation';
-export interface Reminder { id: string; kind: ReminderKind; title: string; detail: string; href: string; overdue: boolean }
+export interface Reminder { id: string; kind: ReminderKind; title: string; detail: string; href: string; overdue: boolean;
+  /** Optional secondary action, e.g. Reorder on the Fresh Eggs Daily shop. */
+  action?: { label: string; href: string; external?: boolean } }
 
 /** Every persisted household-scoped collection, keyed by table name. */
 export interface CollectionMap {
   flocks: Flock; birds: Bird; bird_health_events: BirdHealthEvent; egg_collections: EggLog; egg_inventory: EggDisposition;
   flock_costs: FlockCost; chore_templates: ChoreTemplate; chore_occurrences: ChoreDone; feed_inventory: FeedItem; feed_logs: FeedLog;
   incubation_batches: IncubationBatch; hatch_events: HatchEvent;
+  feeding_logs: FeedingLog; treat_logs: TreatLog; household_people: HouseholdMember;
 }
 export type CollectionName = keyof CollectionMap;
 export const COLLECTIONS: CollectionName[] = [
   'flocks', 'birds', 'bird_health_events', 'egg_collections', 'egg_inventory', 'flock_costs', 'chore_templates',
   'chore_occurrences', 'feed_inventory', 'feed_logs', 'incubation_batches', 'hatch_events',
+  'feeding_logs', 'treat_logs', 'household_people',
 ];
 
 export interface BackupFile { app: 'fresh-eggs-daily'; version: 1; exportedAt: string; household: Household; collections: { [K in CollectionName]: CollectionMap[K][] } }

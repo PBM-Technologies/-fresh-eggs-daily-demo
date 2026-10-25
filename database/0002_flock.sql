@@ -9,6 +9,9 @@ create table if not exists flocks (
   name text not null check (length(name) between 1 and 80),
   coop_name text,
   notes text,
+  feed_times text[] check (feed_times is null or array_length(feed_times, 1) between 1 and 3),
+  feed_item_id uuid, -- feed_inventory row feedings draw from; null means the first feed item
+  track_feed_amounts boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -127,7 +130,7 @@ create table if not exists feed_inventory (
   id uuid primary key default gen_random_uuid(),
   household_id uuid not null references households(id) on delete cascade,
   name text not null,
-  category text not null check (category in ('feed','treats','bedding','supplement','grit','other')),
+  category text not null check (category in ('feed','treats','scratch','bedding','supplement','grit','coop_care','other')),
   unit text not null,
   quantity numeric(12,3) not null check (quantity >= 0),
   counted_on date not null,
@@ -145,6 +148,45 @@ create table if not exists feed_logs (
   kind text not null check (kind in ('restock','recount','use')),
   amount numeric(12,3) not null,
   notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Names-only people in the household (no login), used for "done by" on feedings.
+create table if not exists household_people (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  name text not null check (length(name) between 1 and 40),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Daily feeding check-off. One row per flock, day and feed time slot.
+create table if not exists feeding_logs (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  flock_id uuid not null references flocks(id) on delete cascade,
+  day date not null,
+  slot smallint not null check (slot between 0 and 2),
+  label text not null,
+  done_at timestamptz not null,
+  done_by text,
+  item_id uuid references feed_inventory(id) on delete set null,
+  amount numeric(12,3) check (amount is null or amount >= 0),
+  feed_log_id uuid references feed_logs(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (flock_id, day, slot)
+);
+
+create table if not exists treat_logs (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  flock_id uuid not null references flocks(id) on delete cascade,
+  day date not null,
+  item_id uuid not null references feed_inventory(id) on delete cascade,
+  amount numeric(10,2) not null check (amount > 0),
+  unit text not null check (unit in ('cups','grams','handfuls')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

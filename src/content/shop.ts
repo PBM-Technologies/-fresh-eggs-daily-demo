@@ -17,3 +17,15 @@ export const SHOP_CATEGORIES: ShopCategory[] = [
   { slug: 'coop-care', title: 'Coop care', blurb: 'Nesting box and coop freshening products for a cleaner coop.', url: FED_COOP },
   { slug: 'chick-care', title: 'Chick care', blurb: 'Support for chicks from the brooder to the backyard.', url: FED_ALL },
 ];
+
+/**
+ * Reorder links for low inventory, only for categories Fresh Eggs Daily sells
+ * (treats, supplements and coop care). Everything else returns null and is
+ * shown as a plain reminder.
+ */
+export function reorderUrl(category: string): string | null {
+  if (category === 'treats') return FED_TREATS;
+  if (category === 'supplement') return FED_ALL;
+  if (category === 'coop_care') return FED_COOP;
+  return null;
+}

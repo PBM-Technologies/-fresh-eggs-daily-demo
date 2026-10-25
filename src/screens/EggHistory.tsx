@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useApp } from '../state/AppData';
 import { BarChart, Card, Chips, Confirm, Empty, Field, Page, Sheet, Stat, Stepper } from '../components/ui';
-import { navigate, useRoute } from '../router';
+import { Link, navigate, useRoute } from '../router';
 import { addDays, formatDate, formatMonth, isDateKey, monthKey, relativeDay } from '../logic/dates';
 import { dailyTotals, economics, eggsOnHand, layingTrend, money, monthlyTotals, topLayers, weeklyTotals } from '../logic/eggs';
 import { parseMoney } from '../components/helpers';
@@ -209,6 +209,10 @@ function Costs() {
   }
   return (
     <>
+      <Link to="/spending" className="card cta-card">
+        <span className="cta-emoji" aria-hidden="true">💰</span>
+        <span className="item-main"><strong style={{ display: 'block' }}>See monthly spending</strong><span className="small muted">Totals by category, 6 month trend and cost per hen</span></span>
+      </Link>
       {byCat.length > 0 && (
         <Card title="All-time by category">
           <div className="grid3">{byCat.map((c) => <Stat key={c.value} value={money(c.total)} label={`${c.emoji} ${c.label}`} />)}</div>

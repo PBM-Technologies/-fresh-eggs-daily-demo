@@ -44,6 +44,9 @@ Build a production-capable, mobile-first consumer application. This repository c
 - `chore_occurrences`
 - `feed_inventory`
 - `feed_logs`
+- `feeding_logs`
+- `treat_logs`
+- `household_people`
 - `incubation_batches`
 - `hatch_events`
 - `articles`

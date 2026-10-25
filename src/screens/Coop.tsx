@@ -5,7 +5,8 @@ import { Check } from '../components/Icons';
 import { choreStreak, nextDueDate, RECURRENCE_LABEL, todaysChecklist } from '../logic/chores';
 import { relativeDay } from '../logic/dates';
 import { nowIso } from '../data/ids';
-import type { ChoreRecurrence, ChoreTemplate } from '../contracts/domain';
+import type { ChoreRecurrence, ChoreTemplate, Flock } from '../contracts/domain';
+import { FeedingChecklist, FeedTimesForm } from '../components/Feeding';
 
 const RECS: { value: ChoreRecurrence; label: string }[] = [
   { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }, { value: 'seasonal', label: 'Seasonal' },
@@ -14,6 +15,7 @@ const RECS: { value: ChoreRecurrence; label: string }[] = [
 export default function Coop() {
   const { data, today, save, remove, toast } = useApp();
   const [editing, setEditing] = useState<ChoreTemplate | 'new' | null>(null);
+  const [feedTimes, setFeedTimes] = useState<Flock | null>(null);
   const items = todaysChecklist(data.chore_templates, data.chore_occurrences, today);
   const done = items.filter((i) => i.done).length;
   const streak = choreStreak(data.chore_templates, data.chore_occurrences, today);
@@ -43,6 +45,14 @@ export default function Coop() {
           <Stat value={`${streak} 🔥`} label="Day streak (all daily chores)" />
           <Stat value={items.filter((i) => i.overdue).length} label="Overdue" />
         </div>
+      </Card>
+      <Card title="Feeding" action={data.flocks.length === 1 ? <button className="btn small ghost" onClick={() => setFeedTimes(data.flocks[0])}>Edit times</button> : undefined}>
+        <FeedingChecklist />
+        {data.flocks.length > 1 && (
+          <div className="chips" style={{ marginTop: 10 }} aria-label="Edit feed times">
+            {data.flocks.map((f) => <button key={f.id} type="button" className="chip" onClick={() => setFeedTimes(f)}>Edit {f.name} times</button>)}
+          </div>
+        )}
       </Card>
       <Card title="Today's checklist">
         {items.length === 0 ? (
@@ -81,6 +91,9 @@ export default function Coop() {
           </ul>
         )}
       </Card>
+      <Sheet open={!!feedTimes} title={feedTimes ? `Feed times: ${feedTimes.name}` : 'Feed times'} onClose={() => setFeedTimes(null)}>
+        {feedTimes && <FeedTimesForm key={feedTimes.id} flock={feedTimes} onDone={() => setFeedTimes(null)} />}
+      </Sheet>
       <Sheet open={!!editing} title={editing === 'new' ? 'New chore' : 'Edit chore'} onClose={() => setEditing(null)}>
         {editing && <ChoreForm key={editing === 'new' ? 'new' : editing.id} chore={editing === 'new' ? undefined : editing} onDone={() => setEditing(null)} />}
       </Sheet>

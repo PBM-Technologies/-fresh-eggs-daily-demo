@@ -3,7 +3,7 @@ import { useApp } from '../state/AppData';
 import { Card, Confirm, Field, Page, Pill, Sheet } from '../components/ui';
 import { buildBackup, costsCsv, deleteEverything, eggsCsv, parseBackup, restoreBackup, salesCsv } from '../data/service';
 import { downloadText } from '../components/helpers';
-import { navigate } from '../router';
+import { Link, navigate } from '../router';
 import type { Flock } from '../contracts/domain';
 
 export default function Account() {
@@ -78,6 +78,13 @@ export default function Account() {
         </ul>
       </Card>
 
+      <Members />
+
+      <Link to="/spending" className="card cta-card">
+        <span className="cta-emoji" aria-hidden="true">💰</span>
+        <span className="item-main"><strong style={{ display: 'block' }}>Flock spending</strong><span className="small muted">Monthly costs, cost per hen and net after egg sales</span></span>
+      </Link>
+
       <Card title="Your data">
         <p className="small muted">Everything is saved in this browser on this device{adapter.persistent ? '' : '. Storage is blocked here, so data lasts only until you close this tab. Export a backup to keep it'}. Export a backup regularly, especially before clearing your browser.</p>
         {!adapter.persistent && <div className="notice" role="alert">Browser storage is unavailable. Your changes will be lost when this tab closes.</div>}
@@ -127,7 +134,7 @@ export default function Account() {
         body={pendingImport ? `This replaces everything on this device with the backup for "${pendingImport.household.name}" (${pendingImport.collections.birds.length} birds, ${pendingImport.collections.egg_collections.length} egg logs).` : ''}
         onConfirm={() => void doImport()} />
       <Sheet open={wipe} title="Delete all data?" onClose={() => { setWipe(false); setWipeText(''); }}>
-        <p className="muted">This permanently removes your household, flocks, hens, egg logs, sales, costs, chores, care, feed and hatch records from this device. Download a backup first if you might want them later.</p>
+        <p className="muted">This permanently removes your household, flocks, hens, egg logs, sales, costs, chores, feedings, treats, care, feed and hatch records from this device. Download a backup first if you might want them later.</p>
         <Field label='Type DELETE to confirm'>{(id) => <input id={id} className="input" value={wipeText} onChange={(e) => setWipeText(e.target.value)} autoComplete="off" autoCapitalize="characters" />}</Field>
         <div className="row gap">
           <button className="btn ghost grow" onClick={() => { setWipe(false); setWipeText(''); }}>Cancel</button>
@@ -135,6 +142,44 @@ export default function Account() {
         </div>
       </Sheet>
     </Page>
+  );
+}
+
+function Members() {
+  const { data, save, remove, toast } = useApp();
+  const [name, setName] = useState('');
+  const [err, setErr] = useState('');
+  const members = [...data.household_people].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  async function add(e: FormEvent) {
+    e.preventDefault();
+    const n = name.trim();
+    if (!n) return setErr('Enter a name.');
+    if (members.some((m) => m.name.toLowerCase() === n.toLowerCase())) return setErr('That name is already on the list.');
+    await save('household_people', { name: n });
+    setName(''); setErr('');
+    toast(`${n} added`);
+  }
+  return (
+    <Card title="Household members">
+      <p className="small muted">Names only, so you can see who did each feeding. No accounts or emails.</p>
+      {members.length > 0 && (
+        <ul className="list" style={{ marginBottom: 12 }} aria-label="Household members">
+          {members.map((m) => (
+            <li key={m.id} className="item">
+              <span className="avatar" aria-hidden="true" style={{ width: 40, height: 40, fontSize: '1rem', fontWeight: 800 }}>{m.name.slice(0, 1).toUpperCase()}</span>
+              <span className="item-main"><span className="item-title">{m.name}</span></span>
+              <button className="btn small ghost" onClick={() => void remove('household_people', m.id)} aria-label={`Remove ${m.name}`}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form className="row gap" style={{ alignItems: 'flex-start' }} onSubmit={(e) => void add(e)} noValidate>
+        <div className="grow">
+          <Field label="Add a member" error={err}>{(id, d) => <input id={id} aria-describedby={d} className="input" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="First name" autoComplete="off" />}</Field>
+        </div>
+        <button type="submit" className="btn primary" style={{ marginTop: 28 }}>Add</button>
+      </form>
+    </Card>
   );
 }
 

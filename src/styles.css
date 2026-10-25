@@ -308,3 +308,27 @@ table.guide tr.now td { background: var(--yolk-soft); font-weight: 800; }
 .why li { margin-bottom: 2px; }
 .photo-actions { display: grid; grid-template-columns: 1fr; gap: 10px; }
 @media (min-width: 520px) { .photo-actions { grid-template-columns: 1fr 1fr; } }
+
+/* Feeding check-off, treats, spending, reorder */
+.feeding-group + .feeding-group { margin-top: 10px; }
+.feeding-flock { font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 4px 0 2px; }
+.feeding-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0 6px; }
+.feeding-row .check { flex: 1 1 150px; min-width: 0; }
+.feeding-actions { display: flex; gap: 4px; margin-left: auto; }
+.check[aria-checked='true'] .feeding-sub { color: var(--sage); font-weight: 700; }
+.treat-meter .treat-num { font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.treat-meter .progress { margin-top: 8px; }
+.treat-meter.ok .progress > span, .treat-meter.none .progress > span { background: var(--sage); }
+.treat-meter.near .progress > span { background: var(--yolk); }
+.treat-meter.over .progress > span { background: var(--bad); }
+.treat-note { margin: 10px 0 0; }
+.reminder-row { display: flex; align-items: center; gap: 8px; }
+.reminder-row .item { flex: 1; min-width: 0; }
+.month-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--paper); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px; margin-bottom: 14px; }
+.month-nav .icon-btn:disabled { opacity: .35; cursor: not-allowed; }
+.spend-total { font-family: var(--serif); font-size: 2.4rem; font-weight: 650; line-height: 1.1; margin: 2px 0 12px; font-variant-numeric: tabular-nums; }
+.spend-bars .bar, .spend-trend .bar { fill: var(--red); }
+.spend-trend .bar.now { fill: var(--yolk); }
+.spend-bars .track { fill: var(--sand); }
+.spend-bars .cat-label { font-size: 12px; fill: var(--text); font-weight: 700; font-family: var(--font); }
+.spend-bars .cat-val { font-size: 12px; fill: var(--text); font-weight: 800; font-family: var(--font); font-variant-numeric: tabular-nums; }

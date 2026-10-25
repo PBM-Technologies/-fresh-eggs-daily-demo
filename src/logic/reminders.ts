@@ -5,6 +5,7 @@ import { todaysChecklist } from './chores';
 import { relativeDay } from './dates';
 import { daysRemaining, stockLevel } from './feed';
 import { incubationDay, MILESTONES } from './incubation';
+import { reorderUrl } from '../content/shop';
 
 /** Everything due today or overdue, across chores, care, feed and incubation. */
 export function remindersFor(s: Snapshot, today: DateKey): Reminder[] {
@@ -26,7 +27,7 @@ export function remindersFor(s: Snapshot, today: DateKey): Reminder[] {
     const lvl = stockLevel(f, today);
     if (lvl === 'out' || lvl === 'low') {
       const d = daysRemaining(f, today);
-      out.push({ id: `feed:${f.id}`, kind: 'feed', title: lvl === 'out' ? `Out of ${f.name}` : `${f.name} is running low`, detail: lvl === 'out' ? 'Restock soon' : `About ${d} day${d === 1 ? '' : 's'} left`, href: '#/feed', overdue: lvl === 'out' });
+      out.push({ id: `feed:${f.id}`, kind: 'feed', title: lvl === 'out' ? `Out of ${f.name}` : `${f.name} is running low`, detail: lvl === 'out' ? 'Restock soon' : `About ${d} day${d === 1 ? '' : 's'} left`, href: '#/feed', overdue: lvl === 'out', ...reorderAction(f.category) });
     }
   }
   const hatched = new Set(s.hatch_events.map((h) => h.batchId));
@@ -38,4 +39,9 @@ export function remindersFor(s: Snapshot, today: DateKey): Reminder[] {
     else if (day > 21) out.push({ id: `inc:${b.id}:late`, kind: 'incubation', title: `Record hatch results: ${b.name}`, detail: `Day ${day}. Expected hatch was day 21.`, href: '#/brooder', overdue: true });
   }
   return out.sort((a, b) => Number(b.overdue) - Number(a.overdue));
+}
+
+function reorderAction(category: string): Pick<Reminder, 'action'> {
+  const url = reorderUrl(category);
+  return url ? { action: { label: 'Reorder', href: url, external: true } } : {};
 }

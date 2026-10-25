@@ -24,6 +24,8 @@ import RemindersList from './screens/RemindersList';
 import Identify from './screens/Identify';
 import HealthCheck from './screens/HealthCheck';
 import Breeds, { BreedDetail } from './screens/Breeds';
+import Spending from './screens/Spending';
+import Treats from './screens/Treats';
 
 export const MORE_LINKS = [
   { to: '/identify', emoji: '📷', title: 'Identify', sub: 'Breed or egg from a photo' },
@@ -31,6 +33,8 @@ export const MORE_LINKS = [
   { to: '/breeds', emoji: '🐓', title: 'Breed guide', sub: 'What to add next' },
   { to: '/care', emoji: '🩺', title: 'Care', sub: 'Health and biosecurity' },
   { to: '/feed', emoji: '🌾', title: 'Feed', sub: 'Supplies and usage' },
+  { to: '/treats', emoji: '🌽', title: 'Treats', sub: 'Today vs a healthy limit' },
+  { to: '/spending', emoji: '💰', title: 'Spending', sub: 'Monthly flock costs' },
   { to: '/brooder', emoji: '🐣', title: 'Brooder', sub: 'Incubation and chicks' },
   { to: '/learn', emoji: '📖', title: 'Learn', sub: 'Practical guides' },
   { to: '/recipes', emoji: '🍳', title: 'Recipes', sub: 'Use those eggs' },
@@ -47,6 +51,8 @@ const ROUTES: { pattern: string; render(p: Record<string, string>): JSX.Element 
   { pattern: '/coop', render: () => <Coop /> },
   { pattern: '/care', render: () => <Care /> },
   { pattern: '/feed', render: () => <Feed /> },
+  { pattern: '/treats', render: () => <Treats /> },
+  { pattern: '/spending', render: () => <Spending /> },
   { pattern: '/brooder', render: () => <Brooder /> },
   { pattern: '/learn', render: () => <Learn /> },
   { pattern: '/recipes', render: () => <Recipes /> },

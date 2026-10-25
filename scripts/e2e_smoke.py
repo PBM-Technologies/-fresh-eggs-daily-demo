@@ -9,7 +9,7 @@ By default dist/ is served over http://127.0.0.1 (so the service worker and
 manifest paths run too). --file opens dist/index.html straight from disk to
 prove the single-file build works without a server.
 """
-import argparse, functools, http.server, json, os, socketserver, sys, threading, tempfile
+import argparse, functools, math, http.server, json, os, socketserver, sys, threading, tempfile
 from playwright.sync_api import sync_playwright, expect
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +32,7 @@ def main():
     ap.add_argument("--shots", default=None)
     ap.add_argument("--file", action="store_true")
     ap.add_argument("--ai-shots", default=None, help="screenshots of the photo check and breed screens (demo build)")
+    ap.add_argument("--feed-shots", default=None, help="screenshots of feedings, treats and spending (demo build, 390x844 at 1x)")
     args = ap.parse_args()
     httpd = None
     if args.file:
@@ -252,7 +253,7 @@ def main():
         expect(page.get_by_role("button", name="Identify this egg")).to_be_disabled()
 
         # Every route renders without errors
-        for r in ["/", "/flock", "/eggs", "/eggs/history", "/coop", "/care", "/feed", "/brooder", "/learn", "/recipes", "/shop", "/account", "/identify", "/health-check", "/breeds", "/breeds/silkie"]:
+        for r in ["/", "/flock", "/eggs", "/eggs/history", "/coop", "/care", "/feed", "/treats", "/spending", "/brooder", "/learn", "/recipes", "/shop", "/account", "/identify", "/health-check", "/breeds", "/breeds/silkie"]:
             go(r)
             overflow = page.evaluate("document.documentElement.scrollWidth > window.innerWidth")
             assert not overflow, f"horizontal overflow on {r}"
@@ -279,6 +280,7 @@ def main():
 
         if os.path.isdir(DIST_DEMO):
             ai_flow(browser, errors, args.ai_shots or args.shots)
+            feed_flow(browser, errors, args.feed_shots)
         else:
             print("dist-demo missing: run npm run build:demo to include the photo check flow")
 
@@ -445,6 +447,182 @@ def ai_flow(browser, errors, shots):
     # 360px wide: no horizontal overflow on new screens
     page.set_viewport_size({"width": 360, "height": 740})
     for r in ["/identify", "/health-check", "/breeds", "/breeds/mille-fleur-duccle"]:
+        go(r)
+        assert not page.evaluate("document.documentElement.scrollWidth > window.innerWidth"), f"overflow on {r}"
+    ctx.close()
+    httpd.shutdown()
+
+
+def feed_flow(browser, errors, shots):
+    """Demo build: daily feedings deduct inventory, treat meter, spending, restock with price, reorder links."""
+    httpd, base = serve(DIST_DEMO)
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=1, is_mobile=True, has_touch=True, accept_downloads=True, locale="en-US")
+    page = ctx.new_page()
+    blocked_font = lambda t: "fonts.googleapis" in t or "fonts.gstatic" in t
+    page.on("console", lambda m: m.type in ("error", "warning") and not blocked_font(m.text) and errors.append(f"feed {m.type}: {m.text}"))
+    page.on("pageerror", lambda e: errors.append(f"feed pageerror: {e}"))
+    key = "fed:demo:v1:"
+
+    def go(route):
+        page.goto(f"{base}#{route}")
+        page.wait_for_selector("#page-title")
+
+    def shot(name):
+        if shots:
+            page.locator(".toast").wait_for(state="detached", timeout=6000)
+            page.evaluate("document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0)")
+            os.makedirs(shots, exist_ok=True)
+            page.screenshot(path=os.path.join(shots, f"{name}.png"), full_page=False)
+
+    def layer_qty():
+        return page.evaluate(f"""() => {{
+            const items = JSON.parse(localStorage.getItem('{key}feed_inventory') || '[]');
+            const it = items.find(i => i.name === 'Layer feed');
+            const days = Math.max(0, Math.round((Date.parse(new Date().toISOString().slice(0,10)) - Date.parse(it.countedOn)) / 864e5));
+            return Math.max(0, it.quantity - days * it.dailyUsage);
+        }}""")
+
+    def month_total():
+        return float(page.get_by_test_id("month-total").inner_text().replace("$", "").replace(",", ""))
+
+    # Home: sample has this morning's feeding done by Sarah, evening still open
+    go("/")
+    expect(page.get_by_role("heading", name="Feeding today")).to_be_visible()
+    morning = page.get_by_role("checkbox", name="Morning feed")
+    evening = page.get_by_role("checkbox", name="Evening check")
+    expect(morning).to_have_attribute("aria-checked", "true")
+    expect(page.get_by_text("Fed at 7:10 AM by Sarah")).to_be_visible()
+    expect(evening).to_have_attribute("aria-checked", "false")
+    expect(page.get_by_role("meter", name="Treats today compared with the suggested limit")).to_be_visible()
+    shot("f-home-feedings")
+
+    # Complete the evening check: inventory drops by the default split (0.75 lb / 2)
+    before = layer_qty()
+    evening.click()
+    expect(evening).to_have_attribute("aria-checked", "true")
+    expect(page.get_by_text("Checked at", exact=False)).to_be_visible()
+    after = layer_qty()
+    assert abs((before - after) - 0.375) < 0.001, (before, after)
+
+    # Edit: done by Alex, amount 0.5 lb
+    page.get_by_role("button", name="Edit Evening check").click()
+    s = page.locator("dialog[open]")
+    s.get_by_role("radio", name="Alex").click()
+    s.get_by_label("Amount (lb of Layer feed)").fill("0.5")
+    s.get_by_role("button", name="Save").click()
+    expect(page.get_by_text("by Alex", exact=False)).to_be_visible()
+    edited = layer_qty()
+    assert abs((before - edited) - 0.5) < 0.001, (before, edited)
+
+    # Undo puts it back, then complete again
+    page.get_by_role("button", name="Undo Evening check").click()
+    expect(evening).to_have_attribute("aria-checked", "false")
+    assert abs(layer_qty() - before) < 0.001
+    evening.click()
+    expect(evening).to_have_attribute("aria-checked", "true")
+    final = layer_qty()
+    assert final < before
+
+    # Persists after reload, and the feed log shows the use
+    page.reload()
+    page.wait_for_selector("#page-title")
+    expect(page.get_by_role("checkbox", name="Evening check")).to_have_attribute("aria-checked", "true")
+    assert abs(layer_qty() - final) < 0.001
+    go("/feed")
+    expect(page.get_by_text("Used Layer feed").first).to_be_visible()
+    expect(page.locator("li", has_text="Layer feed").first.get_by_text(f"About {math.floor(final * 10 + 0.5) / 10:g} lb left", exact=False)).to_be_visible()
+
+    # Reorder: low Dried mealworms (treats) links to the FED shop; low items on Home too
+    reorder = page.locator("li", has_text="Dried mealworms").get_by_role("link", name="Reorder")
+    expect(reorder).to_have_attribute("href", "https://fresheggsdailyshop.com/collections/treats")
+    go("/")
+    expect(page.get_by_text("Dried mealworms is running low")).to_be_visible()
+    expect(page.get_by_role("list", name="Running low").get_by_role("link", name="Reorder")).to_have_attribute("target", "_blank")
+    page.get_by_role("button", name="Reminders", exact=False).click()
+    expect(page.locator("dialog[open]").get_by_role("link", name="Reorder", exact=False)).to_be_visible()
+    page.keyboard.press("Escape")
+
+    # Treats: log half a cup of scratch, meter goes over and shows the gentle note
+    go("/treats")
+    expect(page.get_by_role("meter")).to_be_visible()
+    expect(page.get_by_text("Too many treats", exact=False)).to_have_count(0)
+    page.get_by_role("button", name="+ Treat").click()
+    s = page.locator("dialog[open]")
+    s.get_by_role("radio", name="Scratch grains").click()
+    s.get_by_role("radio", name="Cups").click()
+    s.get_by_role("button", name="1/2 cup").click()
+    s.get_by_role("button", name="Save treat").click()
+    expect(page.get_by_text("Too many treats can cut egg laying and protein. Keep layer feed as the main meal.")).to_be_visible()
+    expect(page.locator(".item-sub", has_text="0.5 cups")).to_be_visible()
+    shot("f-treats")
+
+    # Spending: month total, category chart and 6 month trend, CSV export
+    go("/spending")
+    total0 = month_total()
+    assert abs(total0 - 64.47) < 0.001, total0
+    expect(page.get_by_role("img", name="Spending by category", exact=False)).to_be_visible()
+    expect(page.get_by_role("img", name="Spending, last 6 months", exact=False)).to_be_visible()
+    expect(page.get_by_text("Per hen this month")).to_be_visible()
+    expect(page.get_by_text("Net cost after egg sales")).to_be_visible()
+    shot("f-spending")
+    page.get_by_role("button", name="Previous month").click()
+    assert month_total() > 0
+    page.get_by_role("button", name="Next month").click()
+    expect(page.get_by_role("button", name="Next month")).to_be_disabled()
+    with page.expect_download() as dl:
+        page.get_by_role("button", name="Export CSV").click()
+    assert open(dl.value.path()).read().startswith("date,category,amount,notes")
+
+    # Restock with a price: logs a cost and resets the quantity
+    go("/feed")
+    page.locator("li", has_text="Layer feed").first.get_by_role("button", name="Restock").click()
+    s = page.locator("dialog[open]")
+    s.get_by_role("radio", name="Set new total").click()
+    s.get_by_label("On hand now (lb)").fill("50")
+    s.get_by_label("Price paid (optional)").fill("26.49")
+    s.get_by_role("button", name="Save count").click()
+    expect(page.get_by_text("Recounted Layer feed")).to_be_visible()
+    assert abs(layer_qty() - 50) < 0.001, layer_qty()
+    go("/spending")
+    assert abs(month_total() - (total0 + 26.49)) < 0.001
+    go("/eggs/history?tab=costs")
+    expect(page.get_by_text("Feed · Restock: Layer feed")).to_be_visible()
+    page.get_by_role("link", name="See monthly spending", exact=False).click()
+    expect(page.locator("#page-title")).to_have_text("Spending")
+
+    # Household members in Account
+    go("/account")
+    members = page.get_by_role("list", name="Household members")
+    expect(members.get_by_text("Sarah")).to_be_visible()
+    expect(members.get_by_text("Alex")).to_be_visible()
+    page.get_by_label("Add a member").fill("Jordan")
+    page.get_by_role("button", name="Add", exact=True).click()
+    expect(members.get_by_text("Jordan")).to_be_visible()
+    expect(page.get_by_role("link", name="Flock spending", exact=False)).to_be_visible()
+
+    # Coop: feed times are editable (1 to 3)
+    go("/coop")
+    page.get_by_role("button", name="Edit times").click()
+    s = page.locator("dialog[open]")
+    s.get_by_role("button", name="+ Add a feed time").click()
+    s.get_by_role("textbox", name="Feed time 3").fill("Midday top-up")
+    expect(s.get_by_role("button", name="+ Add a feed time")).to_have_count(0)
+    s.get_by_role("button", name="Save").click()
+    expect(page.get_by_role("checkbox", name="Midday top-up")).to_have_attribute("aria-checked", "false")
+    expect(page.get_by_role("checkbox", name="Morning feed")).to_have_attribute("aria-checked", "true")
+
+    # More menu links
+    page.get_by_role("button", name="More").click()
+    page.locator("dialog[open]").get_by_role("link", name="Spending").click()
+    expect(page.locator("#page-title")).to_have_text("Spending")
+
+    # Dark mode and 360px
+    page.emulate_media(color_scheme="dark")
+    go("/")
+    expect(page.get_by_role("heading", name="Feeding today")).to_be_visible()
+    shot("f-home-feedings-dark")
+    page.set_viewport_size({"width": 360, "height": 740})
+    for r in ["/", "/coop", "/feed", "/treats", "/spending", "/account"]:
         go(r)
         assert not page.evaluate("document.documentElement.scrollWidth > window.innerWidth"), f"overflow on {r}"
     ctx.close()
