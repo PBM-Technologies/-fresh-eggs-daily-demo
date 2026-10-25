@@ -1,4 +1,4 @@
-import { FED_SITE, SHOP_CATEGORIES } from '../content/shop';
+import { FED_SITE, FED_STORE_LOCATOR, SHOP_CATEGORIES } from '../content/shop';
 import { Card, Page } from '../components/ui';
 
 const EMOJI: Record<string, string> = { supplements: '🌿', treats: '🍓', 'coop-care': '🏡', 'chick-care': '🐣' };
@@ -17,10 +17,15 @@ export default function Shop() {
           </Card>
         ))}
       </div>
+      <Card>
+        <h2>Shop local</h2>
+        <p className="small muted" style={{ marginTop: 6 }}>Fresh Eggs Daily is carried at farm and feed stores across the country.</p>
+        <a className="btn block" href={FED_STORE_LOCATOR} target="_blank" rel="noopener noreferrer">Find a store near you<span className="sr-only"> (opens in a new tab)</span></a>
+      </Card>
       <Card className="soft">
         <h2>About Fresh Eggs Daily</h2>
         <p className="small muted" style={{ marginTop: 6 }}>Founded by backyard chicken keeper and author Lisa Steele, Fresh Eggs Daily shares natural, practical ways to raise a healthy flock.</p>
-        <a className="link-btn" style={{ paddingLeft: 0 }} href={FED_SITE} target="_blank" rel="noopener noreferrer">Visit fresheggsdaily.com</a>
+        <a className="link-btn" style={{ paddingLeft: 0 }} href={FED_SITE} target="_blank" rel="noopener noreferrer">Visit fresheggsdailyshop.com</a>
       </Card>
     </Page>
   );

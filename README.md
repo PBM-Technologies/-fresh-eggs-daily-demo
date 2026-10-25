@@ -17,7 +17,7 @@ This phase runs entirely in the browser. There is no account, server or payment 
 | `#/feed` | Supplies with quantity, unit and daily usage, days remaining, low-stock warnings, restock and recount log. |
 | `#/brooder` | Incubation batches with day counter, candling on days 7 and 14, lockdown day 18, hatch day 21, hatch results and rate, plus a brooder temperature guide. |
 | `#/learn`, `#/recipes` | 11 original problem-first guides and 8 original egg recipes. |
-| `#/shop` | Fresh Eggs Daily product categories linking to fresheggsdaily.com. Ordering happens on the Fresh Eggs Daily site. |
+| `#/shop` | Fresh Eggs Daily product categories linking to fresheggsdailyshop.com, plus the store locator. Ordering happens on the Fresh Eggs Daily site. |
 | `#/account` | Household name, flocks, JSON backup, CSV export (eggs, sales, costs), restore from backup, delete all data. |
 
 The bell in the top bar is the in-app reminders center: chores due, care follow-ups, quarantine ends, low feed, candling, lockdown and hatch days.
