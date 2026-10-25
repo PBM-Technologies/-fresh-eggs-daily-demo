@@ -21,8 +21,14 @@ import Shop from './screens/Shop';
 import Account from './screens/Account';
 import NotFound from './screens/NotFound';
 import RemindersList from './screens/RemindersList';
+import Identify from './screens/Identify';
+import HealthCheck from './screens/HealthCheck';
+import Breeds, { BreedDetail } from './screens/Breeds';
 
 export const MORE_LINKS = [
+  { to: '/identify', emoji: '📷', title: 'Identify', sub: 'Breed or egg from a photo' },
+  { to: '/health-check', emoji: '🔍', title: 'Health check', sub: 'Photo check for mites and more' },
+  { to: '/breeds', emoji: '🐓', title: 'Breed guide', sub: 'What to add next' },
   { to: '/care', emoji: '🩺', title: 'Care', sub: 'Health and biosecurity' },
   { to: '/feed', emoji: '🌾', title: 'Feed', sub: 'Supplies and usage' },
   { to: '/brooder', emoji: '🐣', title: 'Brooder', sub: 'Incubation and chicks' },
@@ -46,6 +52,10 @@ const ROUTES: { pattern: string; render(p: Record<string, string>): JSX.Element 
   { pattern: '/recipes', render: () => <Recipes /> },
   { pattern: '/shop', render: () => <Shop /> },
   { pattern: '/account', render: () => <Account /> },
+  { pattern: '/identify', render: () => <Identify /> },
+  { pattern: '/health-check', render: () => <HealthCheck /> },
+  { pattern: '/breeds', render: () => <Breeds /> },
+  { pattern: '/breeds/:slug', render: (p) => <BreedDetail slug={p.slug} /> },
 ];
 
 export default function App() {

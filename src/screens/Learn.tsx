@@ -29,6 +29,14 @@ export default function Learn() {
       <div className="chips scroll" role="radiogroup" aria-label="Topic" style={{ marginBottom: 14 }}>
         {TOPICS.map((t) => <button key={t} role="radio" aria-checked={topic === t} className={'chip' + (topic === t ? ' on' : '')} onClick={() => setTopic(t)}>{t}</button>)}
       </div>
+      <Link to="/breeds" className="card cta-card">
+        <span className="cta-emoji" aria-hidden="true">🐓</span>
+        <span className="item-main">
+          <span className="item-title" style={{ display: 'block' }}>Breed guide</span>
+          <span className="item-sub">{'Egg colors, temperament and what to add next'}</span>
+        </span>
+        <Chevron />
+      </Link>
       <Card>
         {list.length === 0 ? <Empty icon="🔍" title="No guides match">Try a different word or topic.</Empty> : (
           <ul className="list">

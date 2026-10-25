@@ -57,6 +57,7 @@ export default function BirdDetail({ birdId }: { birdId: string }) {
         <Stat value={lastEgg ? relativeDay(lastEgg, today) : 'None'} label="Last egg" />
       </div>
       <p className="small muted" style={{ marginTop: -6 }}>Egg totals count logs where you picked {bird.name} as the layer.</p>
+      <Link to={`/health-check?bird=${bird.id}`} className="btn block" style={{ marginBottom: 14 }}>📷 Check this hen with a photo</Link>
       <Card title="Health log" action={<Link to={`/care?bird=${bird.id}`} className="link-btn">+ Add</Link>}>
         {events.length === 0 ? (
           <Empty icon="🩺" title="No health events">Deworming, checks, injuries and vet visits for {bird.name} show up here.</Empty>

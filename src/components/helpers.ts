@@ -1,5 +1,4 @@
-/** Read an image file and return a compressed JPEG data URL no larger than maxSize px on its long edge. */
-export function compressImage(file: File, maxSize = 360, quality = 0.72): Promise<string> {
+function drawScaled(file: File, maxSize: number): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) return reject(new Error('Please choose an image file.'));
     const reader = new FileReader();
@@ -17,11 +16,25 @@ export function compressImage(file: File, maxSize = 360, quality = 0.72): Promis
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject(new Error('Could not process that photo.'));
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        resolve(canvas);
       };
       img.src = String(reader.result);
     };
     reader.readAsDataURL(file);
+  });
+}
+
+/** Read an image file and return a compressed JPEG data URL no larger than maxSize px on its long edge. */
+export async function compressImage(file: File, maxSize = 360, quality = 0.72): Promise<string> {
+  const canvas = await drawScaled(file, maxSize);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+/** Same as compressImage but returns a JPEG Blob (for sending to photo checks). */
+export async function compressImageBlob(file: File, maxSize = 1280, quality = 0.82): Promise<Blob> {
+  const canvas = await drawScaled(file, maxSize);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not process that photo.'))), 'image/jpeg', quality);
   });
 }
 

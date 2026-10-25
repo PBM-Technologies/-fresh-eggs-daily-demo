@@ -8,6 +8,7 @@ export const HEALTH_TYPES: { value: HealthEventType; label: string; emoji: strin
   { value: 'vaccination', label: 'Vaccination', emoji: '💉' },
   { value: 'vet_visit', label: 'Vet visit', emoji: '🩺' },
   { value: 'quarantine', label: 'Quarantine', emoji: '🚧' },
+  { value: 'photo_check', label: 'Photo check', emoji: '📷' },
   { value: 'other', label: 'Other', emoji: '📝' },
 ];
 export const healthLabel = (t: HealthEventType) => HEALTH_TYPES.find((h) => h.value === t)?.label ?? t;

@@ -30,7 +30,7 @@ export type BirdStatus = BirdProfile['status'];
 export interface BirdProfileDetails { color?: string; photo?: string; notes?: string }
 export type Bird = BirdProfile & BirdProfileDetails & Sampleable;
 
-export type HealthEventType = 'deworming' | 'mites_lice_check' | 'injury' | 'molt' | 'vaccination' | 'vet_visit' | 'quarantine' | 'other';
+export type HealthEventType = 'deworming' | 'mites_lice_check' | 'injury' | 'molt' | 'vaccination' | 'vet_visit' | 'quarantine' | 'photo_check' | 'other';
 export interface BirdHealthEvent extends AuditFields, Sampleable {
   householdId: ID; flockId: ID; birdId?: ID; type: HealthEventType; occurredOn: DateKey; notes?: string;
   /** Quarantine end date. */
@@ -69,6 +69,36 @@ export interface HatchEvent extends AuditFields, Sampleable { householdId: ID; b
 export interface Article { slug: string; title: string; topic: 'Chicks' | 'Eggs' | 'Seasons' | 'Coop' | 'Health' | 'Flock'; minutes: number; problem: string; why: string; steps: string[]; getHelp?: string }
 export interface Recipe { slug: string; title: string; summary: string; serves: string; minutes: number; eggs: number; ingredients: string[]; steps: string[] }
 export interface ShopCategory { slug: string; title: string; blurb: string; url: string }
+
+// ---------------------------------------------------------------------------
+// Breed guide and photo checks
+// ---------------------------------------------------------------------------
+export type EggColor = 'white' | 'cream' | 'light brown' | 'brown' | 'dark brown' | 'speckled' | 'blue' | 'green' | 'olive' | 'pink tint';
+export type EggSize = 'small' | 'medium' | 'large' | 'extra large';
+export type Level = 1 | 2 | 3;
+export interface Breed {
+  slug: string; name: string;
+  /** Other names people use, matched case-insensitively (e.g. "Barred Rock"). */
+  aliases?: string[];
+  origin: string; eggColor: EggColor; eggsPerYear: [number, number]; eggSize: EggSize;
+  bodySize: 'bantam only' | 'light' | 'medium' | 'heavy'; bantamAvailable: boolean;
+  temperament: 'calm' | 'friendly' | 'active' | 'flighty';
+  coldHardy: Level; heatTolerant: Level; broody: 'low' | 'medium' | 'high';
+  goodForBeginners: boolean; goodWithKids: boolean; purpose: 'eggs' | 'dual' | 'meat' | 'ornamental';
+  confinementTolerant: boolean; foraging: Level; featherFeet: boolean; crestOrBeard: boolean;
+  /** Heritage or less commonly kept breed. */
+  uncommon?: boolean;
+  description: string; goodToKnow: string[];
+}
+
+export type Confidence = 'high' | 'medium' | 'low';
+export interface BirdIdResult { isChicken: boolean; topMatches: { breed: string; confidence: Confidence; why: string }[]; sex: 'hen' | 'rooster' | 'unsure'; ageGuess: string; notes: string }
+export type EggSizeGuess = 'pullet' | 'small' | 'medium' | 'large' | 'extra large' | 'jumbo' | 'unsure';
+export interface EggIdResult { eggColor: EggColor; likelyBreeds: { breed: string; why: string }[]; sizeGuess: EggSizeGuess; notes: string }
+export type Likelihood = 'likely' | 'possible' | 'less likely';
+export type Urgency = 'routine' | 'soon' | 'urgent';
+export interface HealthIssue { name: string; likelihood: Likelihood; signsSeen: string; checkAtHome: string[]; careSteps: string[] }
+export interface HealthCheckResult { photoUsable: boolean; possibleIssues: HealthIssue[]; urgency: Urgency; seeVetIf: string[]; summary: string }
 
 export type ReminderKind = 'chore' | 'care' | 'feed' | 'incubation';
 export interface Reminder { id: string; kind: ReminderKind; title: string; detail: string; href: string; overdue: boolean }

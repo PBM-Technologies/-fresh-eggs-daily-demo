@@ -73,6 +73,12 @@ export default function Home() {
         </div>
       </Card>
 
+      <nav className="quick-row" aria-label="Photo tools">
+        <Link to="/identify" className="quick"><span aria-hidden="true">📷</span>Identify a breed</Link>
+        <Link to="/health-check" className="quick"><span aria-hidden="true">🔍</span>Photo health check</Link>
+        <Link to="/breeds" className="quick"><span aria-hidden="true">🐓</span>What to add next</Link>
+      </nav>
+
       {birds.length === 0 && !hasSample && (
         <Card>
           <Empty icon="🐔" title="Your flock is empty" action={

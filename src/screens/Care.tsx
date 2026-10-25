@@ -5,6 +5,7 @@ import { Link, navigate, useRoute } from '../router';
 import { careReminders, HEALTH_TYPES, healthEmoji, healthLabel } from '../logic/care';
 import { addDays, formatDate, isDateKey, relativeDay } from '../logic/dates';
 import type { BirdHealthEvent, HealthEventType } from '../contracts/domain';
+import { Chevron } from '../components/Icons';
 
 export default function Care() {
   const { data, today, save, remove, toast, activeFlockId } = useApp();
@@ -20,6 +21,14 @@ export default function Care() {
 
   return (
     <Page title="Care" subtitle="Health and biosecurity log" action={<button className="btn primary small" onClick={() => setOpen(true)}>+ Log</button>}>
+      <Link to="/health-check" className="card cta-card">
+        <span className="cta-emoji" aria-hidden="true">📷</span>
+        <span className="item-main">
+          <span className="item-title" style={{ display: 'block' }}>Photo health check</span>
+          <span className="item-sub">Snap a photo to look for mites, bumblefoot, injuries and more</span>
+        </span>
+        <Chevron />
+      </Link>
       <div className="notice info" role="note">
         This log helps you keep records. Fresh Eggs Daily does not give veterinary diagnosis or treatment advice. If a bird seems unwell, contact a poultry vet.
       </div>

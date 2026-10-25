@@ -62,6 +62,10 @@ export default function FlockScreen() {
           </ul>
         )}
       </Card>
+      <div className="row gap wrap">
+        <Link to="/identify?from=flock" className="btn grow">📷 Identify a breed</Link>
+        <Link to="/breeds" className="btn grow">🐓 Breed guide</Link>
+      </div>
       <Sheet open={adding} title="Add a hen" onClose={close}>
         <BirdForm onDone={close} />
       </Sheet>

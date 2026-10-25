@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import type { Bird, BirdStatus } from '../contracts/domain';
 import { useApp } from '../state/AppData';
-import { BREEDS } from '../content/breeds';
+import { BREEDS, findBreed } from '../content/breeds';
+import { IdentifyPanel } from '../screens/Identify';
 import { Chips, Field, Sheet } from './ui';
 import { compressImage } from './helpers';
 import { isDateKey } from '../logic/dates';
@@ -19,6 +20,7 @@ export default function BirdForm({ bird, onDone }: { bird?: Bird; onDone(saved?:
   const [breed, setBreed] = useState<string | undefined>(bird?.breed ? (knownBreed ? bird.breed : 'Other') : undefined);
   const [otherBreed, setOtherBreed] = useState(bird?.breed && !knownBreed ? bird.breed : '');
   const [breedOpen, setBreedOpen] = useState(false);
+  const [idOpen, setIdOpen] = useState(false);
   const [hatchDate, setHatchDate] = useState(bird?.hatchDate ?? '');
   const [color, setColor] = useState(bird?.color ?? '');
   const [photo, setPhoto] = useState<string | undefined>(bird?.photo);
@@ -27,6 +29,15 @@ export default function BirdForm({ bird, onDone }: { bird?: Bird; onDone(saved?:
   const [notes, setNotes] = useState(bird?.notes ?? '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+
+  /** Fill the breed field from the identifier, preferring the short form list name. */
+  function applyBreed(name: string) {
+    const slug = findBreed(name)?.slug;
+    const listed = BREEDS.find((x) => x === name) ?? (slug ? BREEDS.find((x) => findBreed(x)?.slug === slug) : undefined);
+    if (listed) { setBreed(listed); setOtherBreed(''); }
+    else { setBreed('Other'); setOtherBreed(name.slice(0, 40)); }
+    toast(`Breed set to ${listed ?? name}`);
+  }
 
   async function onPhoto(file: File | undefined) {
     if (!file) return;
@@ -86,6 +97,10 @@ export default function BirdForm({ bird, onDone }: { bird?: Bird; onDone(saved?:
           {breed ? (breed === 'Other' ? `Other${otherBreed ? `: ${otherBreed}` : ''}` : breed) : <span className="muted">Choose a breed</span>}
         </button>
       </div>
+      <button type="button" className="link-btn" style={{ marginTop: -8, marginBottom: 8, paddingLeft: 0 }} onClick={() => setIdOpen(true)}>📷 Identify breed from photo</button>
+      <Sheet open={idOpen} title="Identify breed from photo" onClose={() => setIdOpen(false)}>
+        {idOpen && <IdentifyPanel onUseBreed={(name) => { applyBreed(name); setIdOpen(false); }} />}
+      </Sheet>
       {breed === 'Other' && (
         <Field label="Breed name">
           {(id) => <input id={id} className="input" value={otherBreed} onChange={(e) => setOtherBreed(e.target.value)} maxLength={40} />}
