@@ -1,3 +1,4 @@
+import { IS_DEMO, seedDemo } from '../data/demo';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { CollectionMap, CollectionName, ID } from '../contracts/domain';
 import { createLocalAdapter } from '../data/localAdapter';
@@ -57,7 +58,12 @@ export function AppDataProvider({ children, adapter: given }: { children: ReactN
     }
   }, [adapter]);
 
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => {
+    void (async () => {
+      if (IS_DEMO) { try { await seedDemo(adapter, todayKey()); } catch { /* demo seed is best effort */ } }
+      await reload();
+    })();
+  }, [reload, adapter]);
 
   // Roll the day over if the app stays open past midnight.
   useEffect(() => {

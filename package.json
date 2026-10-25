@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:demo": "tsc --noEmit && VITE_DEMO=1 vite build --outDir dist-demo",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",

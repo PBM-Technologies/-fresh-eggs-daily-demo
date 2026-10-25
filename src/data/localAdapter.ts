@@ -2,7 +2,7 @@ import type { CollectionMap, CollectionName, Household, ID } from '../contracts/
 import type { DataAdapter, ProfileStore, Store } from './repository';
 import { safeLocalStorage, type KeyValueBackend } from './storage';
 
-export const KEY_PREFIX = 'fed:v1:';
+export const KEY_PREFIX = import.meta.env.VITE_DEMO === '1' ? 'fed:demo:v1:' : 'fed:v1:';
 
 function readJson<T>(kv: KeyValueBackend, key: string, fallback: T): T {
   try {

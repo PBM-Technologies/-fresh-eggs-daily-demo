@@ -248,3 +248,6 @@ table.guide tr.now td { background: var(--yolk-soft); font-weight: 800; }
 .more-tile .emoji { font-size: 1.6rem; }
 .more-tile strong { font-size: 1rem; }
 .more-tile span.muted { font-size: .8rem; }
+
+.demo-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px)); background: var(--yolk-soft); color: var(--text); font-size: 0.85rem; }
+.demo-banner button { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--red); background: var(--paper); color: var(--red); font: inherit; font-weight: 700; cursor: pointer; }

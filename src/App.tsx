@@ -1,3 +1,4 @@
+import { IS_DEMO, resetDemo } from './data/demo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from './state/AppData';
 import { match, useRoute, Link } from './router';
@@ -104,6 +105,7 @@ export default function App() {
           {reminders.length > 0 && <span className="dot" aria-hidden="true">{reminders.length > 9 ? '9+' : reminders.length}</span>}
         </button>
       </header>
+      {IS_DEMO && <DemoBanner />}
       <main id="main" ref={mainRef} tabIndex={-1}>{content}</main>
       <nav className="tabbar" aria-label="Main">
         {tabs.map((t) => (
@@ -126,6 +128,17 @@ export default function App() {
         <RemindersList reminders={reminders} onNavigate={() => setBellOpen(false)} />
       </Sheet>
       {toastMsg && <div className="toast" role="status" aria-live="polite">{toastMsg}</div>}
+    </div>
+  );
+}
+
+function DemoBanner() {
+  const { adapter, today, reload, toast } = useApp();
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="demo-banner" role="note">
+      <span><strong>Demo</strong> with a sample flock</span>
+      <button type="button" disabled={busy} onClick={async () => { setBusy(true); await resetDemo(adapter, today); await reload(); setBusy(false); location.hash = '#/'; toast('Demo reset'); }}>Reset demo</button>
     </div>
   );
 }
