@@ -1,7 +1,8 @@
+/* --red tokens hold the primary brand color (now sage green, matching the Fresh Eggs Daily logo). */
 :root {
-  --red: #a72c32;
-  --red-strong: #8c2228;
-  --red-soft: #f6e3e1;
+  --red: #5b7b56;
+  --red-strong: #46633f;
+  --red-soft: #e4ece0;
   --cream: #fff9f1;
   --paper: #ffffff;
   --sand: #f8ece3;
@@ -11,7 +12,7 @@
   --muted: #7a6a5f;
   --yolk: #e9a23b;
   --yolk-soft: #fdf0d8;
-  --sage: #5f7f52;
+  --sage: #4e6f44;
   --sage-soft: #e5eedf;
   --warn: #9a5b00;
   --warn-soft: #fdf0d8;
@@ -28,9 +29,9 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --red: #e0666b;
-    --red-strong: #f08a8e;
-    --red-soft: #3d2424;
+    --red: #a3c49a;
+    --red-strong: #bcd6b4;
+    --red-soft: #25311f;
     --cream: #1d1714;
     --paper: #2a221d;
     --sand: #342a24;
@@ -79,7 +80,7 @@ h1:focus { outline: none; }
 /* Shell */
 .app { min-height: 100dvh; }
 .topbar { position: sticky; top: 0; z-index: 20; background: var(--red); color: #fff; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; display: flex; align-items: center; gap: 10px; }
-@media (prefers-color-scheme: dark) { .topbar { background: #3a1f1f; } }
+@media (prefers-color-scheme: dark) { .topbar { background: #26331f; } }
 .brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-family: var(--serif); font-weight: 650; font-size: 1.15rem; min-height: 44px; }
 .brand svg { width: 30px; height: 30px; }
 .topbar .spacer { flex: 1; }
@@ -112,7 +113,7 @@ main { max-width: 760px; margin: 0 auto; padding: 16px 16px calc(var(--tab-h) + 
 .card { background: var(--paper); border-radius: var(--radius); padding: 18px; margin: 0 0 14px; box-shadow: var(--shadow); }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .card.hero { background: linear-gradient(140deg, var(--red) 0%, var(--red-strong) 100%); color: #fff; }
-@media (prefers-color-scheme: dark) { .card.hero { background: linear-gradient(140deg, #4a2424, #3a1c1c); } }
+@media (prefers-color-scheme: dark) { .card.hero { background: linear-gradient(140deg, #34452e, #283723); } }
 .card.hero .muted { color: rgba(255,255,255,.85); }
 .card.soft { background: var(--sand); box-shadow: none; }
 .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }

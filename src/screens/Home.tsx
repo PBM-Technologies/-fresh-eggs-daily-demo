@@ -68,7 +68,7 @@ export default function Home() {
           <Stat value={`${doneCount}/${checklist.length}`} label="Chores" />
         </div>
         <div className="row gap" style={{ marginTop: 14 }}>
-          <Link to="/eggs" className="btn grow" style={{ background: '#fff', color: '#7a1f24', borderColor: '#fff' }}>🥚 Log eggs</Link>
+          <Link to="/eggs" className="btn grow" style={{ background: '#fff', color: '#3d5638', borderColor: '#fff' }}>🥚 Log eggs</Link>
           <Link to="/coop" className="btn ghost grow" style={{ color: '#fff', borderColor: 'rgba(255,255,255,.6)' }}>Chores</Link>
         </div>
       </Card>
