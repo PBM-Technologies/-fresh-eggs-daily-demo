@@ -1,4 +1,4 @@
-# Fresh Eggs Daily — Product Framework
+# Fresh Eggs Daily: Product Framework
 
 ## Purpose
 Build a production-capable, mobile-first consumer application. This repository currently contains an earlier demo page; it is NOT the production application.
@@ -82,4 +82,19 @@ Fresh Eggs Daily branded product. Product education and merchandising remain ali
 Keep user data, branding, billing, analytics and administrator roles isolated between the two applications. Reuse code packages only, never silently share consumer data.
 
 ## Status
-Architecture and interface contracts specified; production implementation, testing and deployment are still pending. The existing root `index.html` remains a prototype.
+Phase 1 (local-first web app) is implemented in this repo. See README.md for how to run and deploy.
+
+Implemented:
+- Vite + React + TypeScript (strict) single-page app, hash routed with the full route inventory above, built to one self-contained `dist/index.html`.
+- Modules 2 to 8 and 10 working end to end on the device: flocks and hen profiles, egg logging and history (trends, top layers, eggs on hand, sales, costs, cost per dozen, profit), coop chores with recurrence and streaks, health and biosecurity log with reminders, feed inventory with days remaining, incubation and brooder guide, Learn and Recipes content, in-app reminders center.
+- Module 1 as a local household profile (no passwords); module 9 as Shop category links out to the Fresh Eggs Daily site.
+- Persistence behind a `Store`/`DataAdapter` interface (`src/data/`) with a guarded localStorage adapter; JSON backup, CSV export, import and delete-all.
+- `database/0002_flock.sql` defines household-scoped Postgres tables matching the domain types.
+- Vitest unit tests for the data layer and computed logic; Playwright click-through script; GitHub Pages workflow; PWA manifest and service worker when served over http(s).
+
+Still pending before production (see Acceptance gates):
+- Real auth (managed provider, verified identity, household roles) and cross-household access denial on a server.
+- Backend service layer, Postgres deployment, signed image storage, audit logging, backups.
+- Commerce: catalog, cart, subscriptions, orders and fulfillment integrations.
+- Push and email notifications and scheduled reminder jobs.
+- Privacy and security review, analytics, real-device testing, and visual design approval from Fresh Eggs Daily.
