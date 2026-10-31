@@ -28,7 +28,7 @@ import Spending from './screens/Spending';
 import Treats from './screens/Treats';
 import Buyers from './screens/Buyers';
 import Weather from './screens/Weather';
-import logoUrl from './assets/fed-logo.jpg';
+import logoUrl from './assets/fed-logo.png';
 
 export const MORE_LINKS = [
   { to: '/weather', emoji: '🌤️', title: 'Weather', sub: 'Alerts and seasonal care' },
