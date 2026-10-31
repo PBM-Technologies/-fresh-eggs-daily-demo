@@ -1,12 +1,18 @@
 import { FED_SITE, FED_STORE_LOCATOR, SHOP_CATEGORIES } from '../content/shop';
 import { Card, Page } from '../components/ui';
+import { useWeather } from '../data/weather';
+import { ProductPicks, useAlerts } from '../components/Seasonal';
 
 const EMOJI: Record<string, string> = { supplements: '🌿', treats: '🍓', 'coop-care': '🏡', 'chick-care': '🐣' };
 
 export default function Shop() {
+  const alerts = useAlerts(useWeather().days);
   return (
     <Page title="Shop" subtitle="Fresh Eggs Daily products for happy, healthy hens">
       <div className="notice info" role="note">Ordering happens on the Fresh Eggs Daily site. Links open in a new tab.</div>
+      <Card className="picks-card" title="Picked for your flock right now">
+        <ProductPicks alerts={alerts} limit={4} />
+      </Card>
       <div className="grid-auto">
         {SHOP_CATEGORIES.map((c) => (
           <Card key={c.slug}>

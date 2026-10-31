@@ -55,6 +55,17 @@ export type EggDispositionKind = 'sold' | 'given' | 'used';
 /** egg_inventory: eggs leaving the household stock. */
 export interface EggDisposition extends AuditFields, Sampleable {
   householdId: ID; occurredOn: DateKey; kind: EggDispositionKind; count: number; amount?: number; customer?: string; notes?: string;
+  /** Link to a saved egg buyer. customer holds the name as a fallback. */
+  customerId?: ID;
+  /** Sales only. false means the buyer still owes for it; unset counts as paid. */
+  paid?: boolean;
+}
+
+/** A regular egg buyer (neighbor, coworker, farm stand regular). */
+export interface EggCustomer extends AuditFields, Sampleable {
+  householdId: ID; name: string; contact?: string; pricePerDozen?: number;
+  /** Standing order in dozens per week, 0 or unset for none. */
+  standingDozens?: number; notes?: string;
 }
 
 export type CostCategory = 'feed' | 'bedding' | 'vet' | 'equipment' | 'other';
@@ -135,13 +146,13 @@ export interface CollectionMap {
   flocks: Flock; birds: Bird; bird_health_events: BirdHealthEvent; egg_collections: EggLog; egg_inventory: EggDisposition;
   flock_costs: FlockCost; chore_templates: ChoreTemplate; chore_occurrences: ChoreDone; feed_inventory: FeedItem; feed_logs: FeedLog;
   incubation_batches: IncubationBatch; hatch_events: HatchEvent;
-  feeding_logs: FeedingLog; treat_logs: TreatLog; household_people: HouseholdMember;
+  feeding_logs: FeedingLog; treat_logs: TreatLog; household_people: HouseholdMember; egg_customers: EggCustomer;
 }
 export type CollectionName = keyof CollectionMap;
 export const COLLECTIONS: CollectionName[] = [
   'flocks', 'birds', 'bird_health_events', 'egg_collections', 'egg_inventory', 'flock_costs', 'chore_templates',
   'chore_occurrences', 'feed_inventory', 'feed_logs', 'incubation_batches', 'hatch_events',
-  'feeding_logs', 'treat_logs', 'household_people',
+  'feeding_logs', 'treat_logs', 'household_people', 'egg_customers',
 ];
 
 export interface BackupFile { app: 'fresh-eggs-daily'; version: 1; exportedAt: string; household: Household; collections: { [K in CollectionName]: CollectionMap[K][] } }

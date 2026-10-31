@@ -15,6 +15,10 @@ import { FeedingChecklist } from '../components/Feeding';
 import { TreatMeter, useTreatStatus } from './Treats';
 import { reorderUrl } from '../content/shop';
 import { daysRemaining, stockLevel } from '../logic/feed';
+import { useWeather } from '../data/weather';
+import { ProductPicks, WeatherMini, useAlerts } from '../components/Seasonal';
+import { totalOwed } from '../logic/buyers';
+import { money } from '../logic/eggs';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -37,6 +41,9 @@ export default function Home() {
   const low = data.feed_inventory.filter((f) => ['low', 'out'].includes(stockLevel(f, today)));
   const treats = useTreatStatus(activeFlockId);
   const hasSample = COLLS.some((c) => (data[c] as { sample?: boolean }[]).some((x) => x.sample));
+  const weather = useWeather();
+  const alerts = useAlerts(weather.days);
+  const owed = totalOwed(data.egg_inventory);
   const tip = ARTICLES[(Number(today.slice(8, 10)) + Number(today.slice(5, 7))) % ARTICLES.length];
 
   async function loadSample() {
@@ -111,6 +118,10 @@ export default function Home() {
         </Card>
       )}
 
+      <Card title="Weather for the flock" action={<Link to="/weather" className="link-btn">{weather.place ? 'Forecast' : ''}</Link>}>
+        <WeatherMini days={weather.days} alerts={alerts} hasPlace={!!weather.place} />
+      </Card>
+
       <nav className="quick-row" aria-label="Photo tools">
         <Link to="/identify" className="quick"><span aria-hidden="true">📷</span>Identify a breed</Link>
         <Link to="/health-check" className="quick"><span aria-hidden="true">🔍</span>Photo health check</Link>
@@ -153,6 +164,7 @@ export default function Home() {
             <Stat value={streak} label={streak === 1 ? 'Day streak' : 'Day streak'} tone={streak > 0 ? 'good' : undefined} />
             <Stat value={data.flocks.length} label={data.flocks.length === 1 ? 'Flock' : 'Flocks'} />
           </div>
+          {owed > 0 && <Link to="/eggs/buyers" className="notice row gap between" style={{ textDecoration: 'none', color: 'inherit', marginTop: 10 }}><span>🧺 {money(owed)} owed by egg buyers</span><span className="link-btn">See who</span></Link>}
           {trend.direction !== 'none' && trend.changePct !== null && (
             <p className="small muted" style={{ marginTop: 10 }}>
               Laying is {trend.direction === 'steady' ? 'steady' : trend.direction === 'up' ? `up ${Math.round(trend.changePct)}%` : `down ${Math.abs(Math.round(trend.changePct))}%`} compared with the week before.
@@ -160,6 +172,10 @@ export default function Home() {
           )}
         </Card>
       </div>
+
+      <Card className="picks-card" title="Picked for your flock" action={<Link to="/shop" className="link-btn">Shop</Link>}>
+        <ProductPicks alerts={alerts} />
+      </Card>
 
       {tip && (
         <Card className="soft" title="From the Learn library">
@@ -172,4 +188,4 @@ export default function Home() {
   );
 }
 
-const COLLS: CollectionName[] = ['birds', 'egg_collections', 'egg_inventory', 'flock_costs', 'feed_inventory', 'bird_health_events', 'feeding_logs', 'treat_logs', 'household_people'];
+const COLLS: CollectionName[] = ['birds', 'egg_collections', 'egg_inventory', 'flock_costs', 'feed_inventory', 'bird_health_events', 'feeding_logs', 'treat_logs', 'household_people', 'egg_customers'];

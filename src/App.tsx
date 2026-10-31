@@ -2,7 +2,7 @@ import { IS_DEMO, resetDemo } from './data/demo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from './state/AppData';
 import { match, useRoute, Link } from './router';
-import { EggLogo, IconBell, IconCoop, IconEgg, IconFlock, IconHome, IconMore } from './components/Icons';
+import { IconBell, IconCoop, IconEgg, IconFlock, IconHome, IconMore } from './components/Icons';
 import { Sheet, Spinner } from './components/ui';
 import { remindersFor } from './logic/reminders';
 import Onboarding from './screens/Onboarding';
@@ -26,8 +26,13 @@ import HealthCheck from './screens/HealthCheck';
 import Breeds, { BreedDetail } from './screens/Breeds';
 import Spending from './screens/Spending';
 import Treats from './screens/Treats';
+import Buyers from './screens/Buyers';
+import Weather from './screens/Weather';
+import logoUrl from './assets/fed-logo.jpg';
 
 export const MORE_LINKS = [
+  { to: '/weather', emoji: '🌤️', title: 'Weather', sub: 'Alerts and seasonal care' },
+  { to: '/eggs/buyers', emoji: '🧺', title: 'Egg buyers', sub: 'Regulars and who owes you' },
   { to: '/identify', emoji: '📷', title: 'Identify', sub: 'Breed or egg from a photo' },
   { to: '/health-check', emoji: '🔍', title: 'Health check', sub: 'Photo check for mites and more' },
   { to: '/breeds', emoji: '🐓', title: 'Breed guide', sub: 'What to add next' },
@@ -48,6 +53,8 @@ const ROUTES: { pattern: string; render(p: Record<string, string>): JSX.Element 
   { pattern: '/flock/:birdId', render: (p) => <BirdDetail birdId={p.birdId} /> },
   { pattern: '/eggs', render: () => <Eggs /> },
   { pattern: '/eggs/history', render: () => <EggHistory /> },
+  { pattern: '/eggs/buyers', render: () => <Buyers /> },
+  { pattern: '/weather', render: () => <Weather /> },
   { pattern: '/coop', render: () => <Coop /> },
   { pattern: '/care', render: () => <Care /> },
   { pattern: '/feed', render: () => <Feed /> },
@@ -108,13 +115,13 @@ export default function App() {
     { to: '/eggs', label: 'Eggs', icon: <IconEgg />, active: section === 'eggs' },
     { to: '/coop', label: 'Coop', icon: <IconCoop />, active: section === 'coop' },
   ];
-  const moreActive = MORE_LINKS.some((m) => m.to === '/' + section);
+  const moreActive = MORE_LINKS.some((m) => m.to === '/' + section) && section !== 'eggs';
 
   return (
     <div className="app">
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.focus(); }}>Skip to content</a>
       <header className="topbar">
-        <Link to="/" className="brand" aria-label="Fresh Eggs Daily home"><EggLogo /> Fresh Eggs Daily</Link>
+        <Link to="/" className="brand" aria-label="Fresh Eggs Daily home"><img src={logoUrl} alt="" className="brand-logo" /> Fresh Eggs Daily</Link>
         <span className="spacer" />
         <button className="icon-btn bell" aria-label={`Reminders, ${reminders.length} due`} onClick={() => setBellOpen(true)}>
           <IconBell />

@@ -40,11 +40,16 @@ export function buildSampleFlock(householdId: ID, flockId: ID, today: DateKey): 
   const feed: FeedItem[] = [layer, item('Pine shavings', 'bedding', 'bags', 2, 8, 0.1, 7), scratch, mealworms];
   const morningUseId = uid('flog_');
 
+  const jan = { id: uid('cust_'), householdId, name: 'Neighbor Jan', pricePerDozen: 6, standingDozens: 1, contact: 'Next door, blue house', createdAt: ts, updatedAt: ts, sample: true };
+  const mike = { id: uid('cust_'), householdId, name: 'Mike from church', pricePerDozen: 6, createdAt: ts, updatedAt: ts, sample: true };
+
   return {
     birds,
     egg_collections: logs,
+    egg_customers: [jan, mike],
     egg_inventory: [
-      { id: uid('out_'), householdId, occurredOn: addDays(today, -6), kind: 'sold', count: 12, amount: 6, customer: 'Neighbor Jan', createdAt: ts, updatedAt: ts, sample: true },
+      { id: uid('out_'), householdId, occurredOn: addDays(today, -6), kind: 'sold', count: 12, amount: 6, customer: jan.name, customerId: jan.id, paid: true, createdAt: ts, updatedAt: ts, sample: true },
+      { id: uid('out_'), householdId, occurredOn: addDays(today, -2), kind: 'sold', count: 18, amount: 9, customer: mike.name, customerId: mike.id, paid: false, createdAt: ts, updatedAt: ts, sample: true },
       { id: uid('out_'), householdId, occurredOn: addDays(today, -3), kind: 'used', count: 6, notes: 'Weekend breakfast', createdAt: ts, updatedAt: ts, sample: true },
     ],
     flock_costs: sampleCosts(householdId, today, ts),

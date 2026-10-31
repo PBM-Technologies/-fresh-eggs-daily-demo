@@ -1,24 +1,27 @@
 /* --red tokens hold the primary brand color (now sage green, matching the Fresh Eggs Daily logo). */
 :root {
   --red: #5b7b56;
-  --red-strong: #46633f;
-  --red-soft: #e4ece0;
-  --cream: #fff9f1;
-  --paper: #ffffff;
-  --sand: #f8ece3;
-  --sand-strong: #efdccd;
-  --line: #e6d3c6;
-  --text: #3b342e;
-  --muted: #7a6a5f;
-  --yolk: #e9a23b;
-  --yolk-soft: #fdf0d8;
+  --red-strong: #44603f;
+  --red-soft: #e3ebdc;
+  --cream: #f7efe1;
+  --paper: #fffcf6;
+  --sand: #f1e6d3;
+  --sand-strong: #e6d5ba;
+  --line: #dfcdb2;
+  --text: #2f2a24;
+  --muted: #74685a;
+  --yolk: #e3a32c;
+  --yolk-soft: #fbedcf;
   --sage: #4e6f44;
-  --sage-soft: #e5eedf;
-  --warn: #9a5b00;
-  --warn-soft: #fdf0d8;
+  --sage-soft: #e3ebdc;
+  --barn: #a8452f;
+  --barn-soft: #f6e1d9;
+  --kraft: #c9a77c;
+  --warn: #8f5300;
+  --warn-soft: #fbedcf;
   --bad: #a72c32;
   --focus: #1f5fbf;
-  --shadow: 0 1px 2px rgba(59, 52, 46, .06), 0 4px 16px rgba(59, 52, 46, .06);
+  --shadow: 0 1px 0 rgba(120, 90, 50, .08), 0 6px 18px rgba(90, 64, 30, .07);
   --radius: 18px;
   --radius-sm: 12px;
   --tab-h: 64px;
@@ -43,6 +46,9 @@
     --yolk-soft: #3d3020;
     --sage: #9cc08c;
     --sage-soft: #26321f;
+    --barn: #e08a72;
+    --barn-soft: #3a241d;
+    --kraft: #8a6f4d;
     --warn: #f0b55a;
     --warn-soft: #3d3020;
     --bad: #f08a8e;
@@ -332,3 +338,97 @@ table.guide tr.now td { background: var(--yolk-soft); font-weight: 800; }
 .spend-bars .track { fill: var(--sand); }
 .spend-bars .cat-label { font-size: 12px; fill: var(--text); font-weight: 700; font-family: var(--font); }
 .spend-bars .cat-val { font-size: 12px; fill: var(--text); font-weight: 800; font-family: var(--font); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ */
+/* Farmhouse refresh (Oct 2026): linen paper, serif headings, barn-red  */
+/* accents, gingham details and illustrated hero. Sage stays primary.   */
+/* ------------------------------------------------------------------ */
+body {
+  background-color: var(--cream);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .35 0 0 0 0 .2 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+h2, .card-head h2, .card-head h3 { font-family: var(--serif); font-weight: 650; font-size: 1.15rem; letter-spacing: -.005em; }
+h1 { font-size: 1.9rem; font-weight: 700; }
+
+.topbar {
+  background: var(--red-strong);
+  box-shadow: 0 2px 0 rgba(0,0,0,.06);
+}
+.topbar::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -8px; height: 8px; pointer-events: none;
+  background: radial-gradient(circle at 8px 0, var(--red-strong) 7px, transparent 7.5px) 0 0 / 16px 8px repeat-x;
+}
+@media (prefers-color-scheme: dark) { .topbar { background: #26331f; } .topbar::after { background-image: radial-gradient(circle at 8px 0, #26331f 7px, transparent 7.5px); } }
+.brand { font-size: 1.25rem; letter-spacing: .01em; }
+
+main { padding-top: 22px; }
+.page-head h1 { position: relative; padding-bottom: 6px; }
+.page-head h1::after { content: ''; display: block; width: 44px; height: 3px; border-radius: 3px; margin-top: 6px; background: var(--barn); opacity: .85; }
+
+.card { border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+.card.soft { border-style: dashed; border-color: var(--kraft); background: var(--sand); }
+.card.hero {
+  position: relative; overflow: hidden; border: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'%3E%3Cg fill='%23ffffff' fill-opacity='.10'%3E%3Cpath d='M110 120V70l30-24 30 24v50z'/%3E%3Cpath d='M104 72l36-30 36 30-4 4-32-26-32 26z'/%3E%3Crect x='130' y='86' width='20' height='34'/%3E%3Cpath d='M30 120c-8-14-6-32 8-40 6-14 22-18 32-10l6-8 3 8 9 2-6 6c5 14-3 34-20 42z'/%3E%3C/g%3E%3Cpath d='M0 112c40-10 80 6 120-2s60-6 80 0v10H0z' fill='%23ffffff' fill-opacity='.12'/%3E%3C/svg%3E") right bottom / 260px auto no-repeat,
+    linear-gradient(150deg, #6a8c64 0%, var(--red) 45%, var(--red-strong) 100%);
+}
+@media (prefers-color-scheme: dark) { .card.hero { background-color: #2f3f29; } }
+.card.hero .stat { background: rgba(255,255,255,.14); color: #fff; backdrop-filter: blur(2px); }
+.card.hero .stat-label { color: rgba(255,255,255,.85); }
+.card.hero .stat-value { font-family: var(--serif); }
+
+.stat { border: 1px solid rgba(120,90,50,.08); }
+.stat-value { font-family: var(--serif); font-weight: 700; }
+
+.btn { border-radius: 999px; font-weight: 800; letter-spacing: .01em; }
+.btn.primary { box-shadow: 0 2px 0 var(--red-strong); }
+.btn.primary:active { box-shadow: none; transform: translateY(2px); }
+.chip[aria-pressed='true'] { background: var(--red); border-color: var(--red); color: #fff; }
+@media (prefers-color-scheme: dark) { .chip[aria-pressed='true'] { color: #1d1714; } }
+
+.tabbar { background: var(--paper); border-top: 1px solid var(--line); }
+.tab[aria-current='page'] { color: var(--red-strong); }
+.tab[aria-current='page'] svg { background: var(--red-soft); border-radius: 999px; padding: 3px 14px; width: 54px; height: 30px; box-sizing: border-box; }
+@media (prefers-color-scheme: dark) { .tab[aria-current='page'] { color: var(--red); } }
+
+.notice { border: 1px solid rgba(227,163,44,.35); }
+.notice.info { border-color: var(--line); }
+
+/* Gingham accent band for the "picked for you" card */
+.picks-card { position: relative; overflow: hidden; padding-top: 26px; }
+.picks-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 10px;
+  background:
+    repeating-linear-gradient(90deg, rgba(168,69,47,.55) 0 8px, transparent 8px 16px),
+    repeating-linear-gradient(0deg, rgba(168,69,47,.55) 0 5px, transparent 5px 10px),
+    var(--barn-soft);
+  opacity: .8;
+}
+.picks { list-style: none; margin: 0; padding: 0; }
+.pick { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px dashed var(--line); }
+.pick:first-child { border-top: 0; padding-top: 2px; }
+.pick-emoji { width: 44px; height: 44px; border-radius: 14px; background: var(--barn-soft); display: grid; place-items: center; font-size: 1.35rem; flex-shrink: 0; }
+.pick .btn { background: var(--barn); border-color: var(--barn); color: #fff; flex-shrink: 0; }
+@media (prefers-color-scheme: dark) { .pick .btn { color: #1d1714; } }
+@media (max-width: 420px) { .pick { flex-wrap: wrap; } .pick .btn { margin-left: 56px; } }
+
+/* Weather */
+.forecast { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; text-align: center; }
+.forecast li { background: var(--sand); border-radius: 14px; padding: 10px 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.fc-emoji { font-size: 1.5rem; line-height: 1.3; }
+.forecast strong { font-family: var(--serif); font-size: 1.1rem; }
+.alerts { list-style: none; margin: 0; padding: 0; }
+.alerts > li + li { margin-top: 10px; }
+.alert { border-radius: 14px; padding: 12px 14px; background: var(--yolk-soft); border-left: 4px solid var(--yolk); }
+.alert.act { background: var(--barn-soft); border-left-color: var(--barn); }
+.steps { margin: 8px 0 0; padding-left: 20px; font-size: .9rem; }
+.steps li + li { margin-top: 4px; }
+.season { background: linear-gradient(180deg, var(--paper), var(--sand)); }
+.tips { margin: 0; padding-left: 18px; }
+.tips li + li { margin-top: 8px; }
+
+.more-tile { border: 1px solid var(--line); }
+.quick { border: 1px solid var(--line); }
+
+.brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.7); }

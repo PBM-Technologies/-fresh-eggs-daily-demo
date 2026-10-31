@@ -220,3 +220,18 @@ create table if not exists recipes (slug text primary key, title text not null, 
 create table if not exists products (id uuid primary key default gen_random_uuid(), external_ref text unique, title text not null, category text, url text);
 create table if not exists orders (id uuid primary key default gen_random_uuid(), household_id uuid not null references households(id), external_ref text, status text not null, created_at timestamptz not null default now());
 create table if not exists subscriptions (id uuid primary key default gen_random_uuid(), household_id uuid not null references households(id), external_ref text, status text not null, created_at timestamptz not null default now());
+
+-- Regular egg buyers, and paid/unpaid tracking on sales.
+create table if not exists egg_customers (
+  id uuid primary key default gen_random_uuid(),
+  household_id uuid not null references households(id) on delete cascade,
+  name text not null check (length(name) between 1 and 60),
+  contact text,
+  price_per_dozen numeric(8,2),
+  standing_dozens numeric(6,2),
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table egg_inventory add column if not exists customer_id uuid references egg_customers(id) on delete set null;
+alter table egg_inventory add column if not exists paid boolean;

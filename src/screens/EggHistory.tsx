@@ -5,6 +5,7 @@ import { Link, navigate, useRoute } from '../router';
 import { addDays, formatDate, formatMonth, isDateKey, monthKey, relativeDay } from '../logic/dates';
 import { dailyTotals, economics, eggsOnHand, layingTrend, money, monthlyTotals, topLayers, weeklyTotals } from '../logic/eggs';
 import { parseMoney } from '../components/helpers';
+import { suggestedPrice, totalOwed } from '../logic/buyers';
 import type { CostCategory, EggDisposition, EggDispositionKind } from '../contracts/domain';
 
 type Tab = 'totals' | 'sales' | 'costs';
@@ -122,6 +123,10 @@ function Sales() {
   const rows = [...data.egg_inventory].sort((a, b) => b.occurredOn.localeCompare(a.occurredOn));
   return (
     <Card title="Sales and give-aways" action={<button className="btn primary small" onClick={() => setOpen(true)}>+ Add</button>}>
+      <Link to="/eggs/buyers" className="notice row gap between" style={{ textDecoration: 'none', color: 'inherit', marginBottom: 12 }}>
+        <span>🧺 <strong>Egg buyers</strong>{totalOwed(data.egg_inventory) > 0 ? ` · ${money(totalOwed(data.egg_inventory))} owed to you` : ''}</span>
+        <span className="link-btn">Open</span>
+      </Link>
       {rows.length === 0 ? (
         <Empty icon="💵" title="Nothing logged yet">Record eggs you sell, give to neighbors or use in the kitchen to keep your eggs on hand count right.</Empty>
       ) : (
@@ -133,7 +138,7 @@ function Sales() {
                 <span className="item-title" style={{ display: 'block' }}>{r.count} eggs {r.kind === 'sold' ? 'sold' : r.kind === 'given' ? 'given away' : 'used'}{r.customer ? ` · ${r.customer}` : ''}</span>
                 <span className="item-sub">{relativeDay(r.occurredOn, today)}{r.notes ? ` · ${r.notes}` : ''}</span>
               </span>
-              {r.kind === 'sold' && <span className="item-end">{money(r.amount ?? 0)}</span>}
+              {r.kind === 'sold' && <span className="item-end">{money(r.amount ?? 0)}{r.paid === false && <><br /><span className="pill warn">owes</span></>}</span>}
               <button className="icon-btn" aria-label="Delete entry" onClick={() => setDel(r)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" /></svg></button>
             </li>
           ))}
@@ -148,34 +153,73 @@ function Sales() {
   );
 }
 
-type SaleDraft = Omit<EggDisposition, 'id' | 'householdId' | 'createdAt' | 'updatedAt'>;
-function SaleForm({ onDone, today }: { onDone(rec?: SaleDraft): void; today: string }) {
+export type SaleDraft = Omit<EggDisposition, 'id' | 'householdId' | 'createdAt' | 'updatedAt'>;
+export function SaleForm({ onDone, today, customerId: presetId }: { onDone(rec?: SaleDraft): void; today: string; customerId?: string }) {
+  const { data } = useApp();
+  const buyers = [...data.egg_customers].sort((a, b) => a.name.localeCompare(b.name));
+  const preset = buyers.find((b) => b.id === presetId);
   const [kind, setKind] = useState<EggDispositionKind>('sold');
   const [count, setCount] = useState(12);
-  const [amount, setAmount] = useState('');
+  const [buyerId, setBuyerId] = useState<string>(preset?.id ?? '');
+  const [amount, setAmount] = useState(() => { const p = suggestedPrice(preset, 12); return p !== null ? p.toFixed(2) : ''; });
+  const [priceTouched, setPriceTouched] = useState(false);
   const [customer, setCustomer] = useState('');
+  const [paid, setPaid] = useState(true);
   const [day, setDay] = useState(today);
   const [notes, setNotes] = useState('');
   const [err, setErr] = useState('');
+  const buyer = buyers.find((b) => b.id === buyerId);
+  function reprice(n: number, b = buyer) {
+    if (priceTouched) return;
+    const p = suggestedPrice(b, n);
+    if (p !== null) setAmount(p.toFixed(2));
+  }
   function submit(e: FormEvent) {
     e.preventDefault();
     const amt = parseMoney(amount);
     if (count < 1) return setErr('Enter at least one egg.');
     if (kind === 'sold' && amt === null) return setErr('Enter the sale price.');
     if (!isDateKey(day) || day > today) return setErr('Pick a date that is today or earlier.');
-    onDone({ kind, count, amount: kind === 'sold' ? amt ?? 0 : undefined, customer: customer.trim() || undefined, occurredOn: day, notes: notes.trim() || undefined });
+    const name = buyer?.name ?? (customer.trim() || undefined);
+    onDone({
+      kind, count, amount: kind === 'sold' ? amt ?? 0 : undefined,
+      customer: kind === 'used' ? undefined : name,
+      customerId: kind === 'sold' && buyer ? buyer.id : undefined,
+      paid: kind === 'sold' ? paid : undefined,
+      occurredOn: day, notes: notes.trim() || undefined,
+    });
   }
   return (
     <form onSubmit={submit} noValidate>
       <Chips label="What happened" value={kind} onChange={setKind} options={KINDS} />
-      <div className="field"><span className="label">Eggs</span><Stepper value={count} onChange={setCount} min={1} max={999} label="Eggs" /></div>
+      <div className="field"><span className="label">Eggs</span><Stepper value={count} onChange={(n) => { setCount(n); reprice(n); }} min={1} max={999} label="Eggs" /></div>
       <div className="chips" style={{ marginBottom: 14 }} aria-label="Quick amounts">
-        {[6, 12, 18, 30].map((n) => <button type="button" key={n} className="chip" onClick={() => setCount(n)}>{n === 12 ? '1 dozen' : n === 6 ? 'Half dozen' : n === 18 ? '18' : '30 flat'}</button>)}
+        {[6, 12, 18, 30].map((n) => <button type="button" key={n} className="chip" onClick={() => { setCount(n); reprice(n); }}>{n === 12 ? '1 dozen' : n === 6 ? 'Half dozen' : n === 18 ? '18' : '30 flat'}</button>)}
       </div>
-      {kind === 'sold' && (
-        <Field label="Total price">{(id) => <input id={id} className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="$6.00" />}</Field>
+      {kind === 'sold' && buyers.length > 0 && (
+        <div className="field">
+          <span className="label">Buyer</span>
+          <div className="chips" role="group" aria-label="Buyer">
+            <button type="button" className="chip" aria-pressed={!buyerId} onClick={() => setBuyerId('')}>Someone else</button>
+            {buyers.map((b) => (
+              <button type="button" key={b.id} className="chip" aria-pressed={buyerId === b.id} onClick={() => { setBuyerId(b.id); reprice(count, b); }}>{b.name}</button>
+            ))}
+          </div>
+        </div>
       )}
-      {kind !== 'used' && (
+      {kind === 'sold' && (
+        <Field label="Total price" hint={buyer?.pricePerDozen ? `${buyer.name} pays ${money(buyer.pricePerDozen)} a dozen` : undefined}>{(id, d) => <input id={id} aria-describedby={d} className="input" inputMode="decimal" value={amount} onChange={(e) => { setAmount(e.target.value); setPriceTouched(true); }} placeholder="$6.00" />}</Field>
+      )}
+      {kind === 'sold' && (
+        <div className="field">
+          <span className="label">Payment</span>
+          <div className="chips" role="group" aria-label="Payment">
+            <button type="button" className="chip" aria-pressed={paid} onClick={() => setPaid(true)}>✅ Paid</button>
+            <button type="button" className="chip" aria-pressed={!paid} onClick={() => setPaid(false)}>🕒 Owes me</button>
+          </div>
+        </div>
+      )}
+      {kind !== 'used' && !(kind === 'sold' && buyer) && (
         <Field label={kind === 'sold' ? 'Customer name' : 'Given to'}>{(id) => <input id={id} className="input" value={customer} onChange={(e) => setCustomer(e.target.value)} maxLength={60} autoComplete="off" />}</Field>
       )}
       <Field label="Date">{(id) => <input id={id} type="date" className="input" value={day} max={today} onChange={(e) => setDay(e.target.value)} />}</Field>
